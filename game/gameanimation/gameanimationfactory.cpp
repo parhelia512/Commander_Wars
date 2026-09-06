@@ -18,6 +18,9 @@
 #include "coreengine/interpreter.h"
 #include "coreengine/globalutils.h"
 
+
+constexpr qint32 MAX_SKIPPING_ATTEMPTS = 200;
+
 spGameAnimationFactory GameAnimationFactory::m_pInstance{nullptr};
 QVector<spGameAnimation> GameAnimationFactory::m_Animations;
 
@@ -170,17 +173,23 @@ GameAnimationPower* GameAnimationFactory::createAnimationPower(GameMap* pMap, QC
     Mainapp::getInstance()->pauseRendering();
     CONSOLE_PRINT("Creating power animation", GameConsole::eDEBUG);
     spGameAnimationPower pGameAnimationPower = GameAnimationPower::createGameAnimationPower(frameTime, color, powerMode, pCO, pMap);
-    pGameAnimationPower->setPriority(static_cast<qint32>(Mainapp::ZOrder::Objects));
-    if (pMap != nullptr)
+    if (!m_Animations.contains(pGameAnimationPower))
     {
-        auto* pMenu = pMap->getMenu();
-        if (pMenu != nullptr)
+        pGameAnimationPower->setPriority(static_cast<qint32>(Mainapp::ZOrder::Objects));
+        if (pMap != nullptr)
         {
-            pMenu->addChild(pGameAnimationPower);
+            auto* pMenu = pMap->getMenu();
+            if (pMenu != nullptr)
+            {
+                pMenu->addChild(pGameAnimationPower);
+            }
         }
+        m_Animations.append(pGameAnimationPower);
     }
-    m_Animations.append(pGameAnimationPower);
-
+    else
+    {
+        CONSOLE_PRINT("Power animation already exists skipping creation and returning existing one", GameConsole::eDEBUG);
+    }
     Mainapp::getInstance()->continueRendering();
     return pGameAnimationPower.get();
 }
@@ -292,11 +301,11 @@ GameAnimation* GameAnimationFactory::createBattleAnimation(GameMap* pMap, Terrai
             {
                 pBack->setAlpha(128);
             }
-            qint32 scaleFactor = 2.0f;
+            qint32 scaleFactor = 2;
             if (scaleFactor * (pRet->getScaledHeight() - 30) > oxygine::Stage::getStage()->getHeight())
             {
-                scaleFactor = 1.0f;
-                while (scaleFactor * (pRet->getScaledHeight() - 30) > oxygine::Stage::getStage()->getHeight())
+                scaleFactor = 1;
+                while (scaleFactor * (pRet->getScaledHeight() - 30) > oxygine::Stage::getStage()->getHeight() && scaleFactor > 1)
                 {
                     scaleFactor /= 2;
                 }
@@ -304,20 +313,32 @@ GameAnimation* GameAnimationFactory::createBattleAnimation(GameMap* pMap, Terrai
             if (battleViewMode == GameEnums::BattleAnimationType_Fullscreen ||
                 battleViewMode == GameEnums::BattleAnimationType_FullscreenTransparent)
             {
-                float scale = oxygine::Stage::getStage()->getHeight() / (pRet->getScaledHeight() - 30);
-                float widthScale = oxygine::Stage::getStage()->getWidth() / (pRet->getScaledWidth() - 30);
-                if (scale > widthScale)
+                float targetHeight = pRet->getScaledHeight() - 30;
+                float targetWidth = pRet->getScaledWidth() - 30;
+                if (targetHeight > 0.0f && targetWidth > 0.0f)
                 {
-                    scale = widthScale;
+                    float scale = oxygine::Stage::getStage()->getHeight() / targetHeight;
+                    float widthScale = oxygine::Stage::getStage()->getWidth() / targetWidth;
+                    if (scale > widthScale)
+                    {
+                        scale = widthScale;
+                    }
+                    if (scaleFactor > 0)
+                    {
+                        qint32 newScale = scaleFactor;
+                        qint32 lastScale = scaleFactor;
+                        while (newScale < scale && newScale > 0)
+                        {
+                            lastScale = newScale;
+                            newScale *= 2;
+                        }
+                        scaleFactor = lastScale;
+                    }
                 }
-                qint32 newScale = scaleFactor;
-                qint32 lastScale = scaleFactor;
-                while (newScale < scale)
-                {
-                    lastScale = newScale;
-                    newScale *= 2;
-                }
-                scaleFactor = lastScale;
+            }
+            if (scaleFactor < 1)
+            {
+                scaleFactor = 1;
             }
             pRet->setScale(scaleFactor);
             pRet->setPosition(static_cast<qint32>(oxygine::Stage::getStage()->getWidth() / 2 - pRet->getScaledWidth() / 2),
@@ -391,16 +412,14 @@ GameAnimation* GameAnimationFactory::getAnimation(qint32 index)
 
 void GameAnimationFactory::removeAnimationFromQueue(spGameAnimation pAnimation)
 {
-    qint32 i = 0;
-    while (i < m_Animations.size())
+    if (pAnimation.get() != nullptr)
     {
-        if (m_Animations[i].get() == pAnimation.get())
+        for (qint32 i = m_Animations.size() - 1; i >= 0; --i)
         {
-            m_Animations.removeAt(i);
-        }
-        else
-        {
-            ++i;
+            if (m_Animations[i].get() == pAnimation.get())
+            {
+                m_Animations.removeAt(i);
+            }
         }
     }
 }
@@ -415,7 +434,7 @@ void GameAnimationFactory::removeAnimation(GameAnimation* pAnimation, bool skipp
 
 void GameAnimationFactory::removeAnimation(spGameAnimation pAnimation, bool skipping, bool removeFromQueue)
 {
-    if (removeFromQueue)
+    if (removeFromQueue && pAnimation.get() != nullptr)
     {
         removeAnimationFromQueue(pAnimation);
     }
@@ -446,26 +465,25 @@ void GameAnimationFactory::finishAllAnimations()
 {
     Mainapp::getInstance()->pauseRendering();
     CONSOLE_PRINT("GameAnimationFactory::finishAllAnimations()", GameConsole::eDEBUG);
-    while (m_Animations.size() > 0)
+    while (!m_Animations.isEmpty())
     {
-        qint32 i = 0;
-        while (i < m_Animations.size())
+        spGameAnimation spAnimation = m_Animations.first();
+        if (!spAnimation->getStarted())
         {
-            spGameAnimation spAnimation = m_Animations[i];
-            if (spAnimation->getStarted())
-            {
-                while (!spAnimation->onFinished(true))
-                {
-                }
-            }
-            else
-            {
-                if (spAnimation->getParent() != nullptr)
-                {
-                    spAnimation->start();
-                }
-                ++i;
-            }
+            spAnimation->start();
+        }
+        qint32 attempts = 0;
+        while (!spAnimation->onFinished(true) && attempts < MAX_SKIPPING_ATTEMPTS)
+        {
+            ++attempts;
+        }
+        if (attempts >= MAX_SKIPPING_ATTEMPTS)
+        {
+            CONSOLE_PRINT("GameAnimationFactory::finishAllAnimations() -> Failed to finish animation " + spAnimation->objectName() + " after " + QString::number(MAX_SKIPPING_ATTEMPTS) + " attempts", GameConsole::eERROR);
+        }
+        if (!m_Animations.isEmpty() && m_Animations.first() == spAnimation)
+        {
+            removeAnimation(spAnimation, true, true);
         }
     }
     Mainapp::getInstance()->continueRendering();
@@ -511,22 +529,24 @@ void GameAnimationFactory::skipAllAnimations()
                  pGameAnimationNextDay == nullptr &&
                  shouldSkipOtherAnimation(pAnimation))))
             {
-                if (!pAnimation->getStarted() && pAnimation->getParent() != nullptr)
+                if (!pAnimation->getStarted())
                 {
                     pAnimation->start();
                 }
-                if (pAnimation->getStarted())
+                qint32 attempts = 0;
+                while (!pAnimation->onFinished(true) && attempts < MAX_SKIPPING_ATTEMPTS)
                 {
-                    while (!pAnimation->onFinished(true));
+                    ++attempts;
                 }
-                else
+                if (attempts >= MAX_SKIPPING_ATTEMPTS)
                 {
-                    i++;
-                    if (pAnimation->getPreviousAnimation() == nullptr)
-                    {
-                        requiresSkipping = true;
-                    }
+                    CONSOLE_PRINT("GameAnimationFactory::finishAllAnimations() -> Failed to finish animation " + pAnimation->objectName() + " after " + QString::number(MAX_SKIPPING_ATTEMPTS) + " attempts", GameConsole::eERROR);
                 }
+                if (i < m_Animations.size() && m_Animations[i].get() == pAnimation)
+                {
+                    removeAnimation(m_Animations[i], true, true);
+                }
+                requiresSkipping = true;
             }
             else
             {

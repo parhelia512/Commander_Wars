@@ -63,11 +63,13 @@ void GameAnimationCapture::addBuildingSprite(const QString spriteID, Player* sta
         else
         {
             CONSOLE_PRINT("Unable to locate file: " + pAnim->getResPath(), GameConsole::eDEBUG);
+            m_missingResource = true;
         }
     }
     else
     {
         CONSOLE_PRINT_MODULE("Unable to load building sprite: " + spriteID, GameConsole::eDEBUG, GameConsole::eResources);
+        m_missingResource = true;
     }
     pApp->continueRendering();
 }
@@ -256,6 +258,11 @@ void GameAnimationCapture::addSoldierSprite(const QString spriteID, Player*  pPl
         else
         {
             pSprite->setResAnim(pAnim);
+            if (!m_finishQueued)
+            {
+                m_finishQueued = true;
+                addTweenWait(m_capturingFactor * m_frameTime);
+            }
         }
 
         if (mode == GameEnums::Recoloring_Mask)
@@ -280,6 +287,7 @@ void GameAnimationCapture::addSoldierSprite(const QString spriteID, Player*  pPl
     else
     {
         CONSOLE_PRINT_MODULE("Unable to load animation sprite: " + spriteID, GameConsole::eDEBUG, GameConsole::eResources);
+        m_missingResource = true;
     }
 }
 
@@ -297,5 +305,6 @@ void GameAnimationCapture::addBackgroundSprite(const QString spriteID)
     else
     {
         CONSOLE_PRINT_MODULE("Unable to load animation sprite: " + spriteID, GameConsole::eDEBUG, GameConsole::eResources);
+        m_missingResource = true;
     }
 }

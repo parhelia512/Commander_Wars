@@ -227,16 +227,15 @@ void GameAnimationNextDay::restart()
 bool GameAnimationNextDay::onFinished(bool skipping)
 {
     bool ret = true;
-    
     if (m_pMap != nullptr &&
         m_pMap->getGameScript() != nullptr &&
         m_pMap->getCurrentPlayer() != nullptr)
     {
         m_pMap->getGameScript()->turnStart(m_pMap->getCurrentDay(), m_pMap->getCurrentPlayer()->getPlayerID());
-        if (!m_permanent)
-        {
-            ret = GameAnimation::onFinished(skipping);
-        }
+    }
+    if (!m_permanent)
+    {
+        ret = GameAnimation::onFinished(skipping);
     }
     return ret;
 }
