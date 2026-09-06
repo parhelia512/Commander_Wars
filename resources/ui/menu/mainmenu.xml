@@ -6,6 +6,20 @@
         <scale>2</scale>
         <sprite>"logo"</sprite>
     </Sprite>
+
+
+    <Textbox>
+        <Id>SecretBox</Id>
+        <x>10</x>
+        <y>10</y>
+        <width>600</width>
+        <tooltip>Setup2faDialog.secretTooltip()</tooltip>
+        <startValue>"HelloHello"</startValue>
+        <onEvent></onEvent>
+        <readonly>true</readonly>
+    </Textbox>
+
+
     <TextField>
         <x>settings.getStageWidth() / 2 - 184 / 2</x>
         <y>MainMenu.getButtonY(0) - 60 * 2 + 24 * 2 - 15</y>

@@ -25,7 +25,7 @@ TextInput::TextInput()
     {
         connect(m_lineEdit.get(), &EventTextEdit::returnPressed, this, &TextInput::editFinished, Qt::QueuedConnection);
         connect(this, &TextInput::sigSetText, m_lineEdit.get(), &EventTextEdit::setPlainText, Qt::BlockingQueuedConnection);
-        connect(this, &TextInput::sigSetReadonly, m_lineEdit.get(), &EventTextEdit::setReadOnly, Qt::BlockingQueuedConnection);
+        connect(this, &TextInput::sigSetReadonlyToEdit, m_lineEdit.get(), &EventTextEdit::setEditableKeys, Qt::BlockingQueuedConnection);
     }
     m_toggle.start();
 }
@@ -119,11 +119,11 @@ void TextInput::setReadonly(bool readonly)
     {
         if (Mainapp::getInstance()->isMainThread())
         {
-            m_lineEdit->setReadOnly(m_readonly);
+            m_lineEdit->setEditableKeys(!m_readonly);
         }
         else
         {
-            emit sigSetReadonly(m_readonly);
+            emit sigSetReadonlyToEdit(!m_readonly);
         }
     }
 }

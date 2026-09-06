@@ -35,7 +35,7 @@ public:
     Q_INVOKABLE void setReadonly(bool readonly);
 signals:
     void sigSetText(const QString text);
-    void sigSetReadonly(const bool readonly);
+    void sigSetReadonlyToEdit(const bool editable);
 public slots:
     virtual void focusedLost() override;
 
