@@ -133,7 +133,6 @@ var ForgotPasswordDialog =
     {
         forgotPassword.setObjectEnabled("EmailBox", value);
         forgotPassword.setObjectEnabled("CodeBox", value);
-        forgotPassword.setObjectEnabled("AbortButton", value);
         forgotPassword.setObjectEnabled("ResetButton", value);
         forgotPassword.setObjectEnabled("SubmitCodeButton", value);
     },
