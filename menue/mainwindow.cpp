@@ -42,6 +42,8 @@
 
 #include "ui_reader/uifactory.h"
 
+#include "objects/qrcodeactor.h"
+
 Mainwindow::Mainwindow(const QString & initialView)
     : m_cheatTimeout(this)
 {
@@ -52,6 +54,7 @@ Mainwindow::Mainwindow(const QString & initialView)
     pApp->pauseRendering();
     Interpreter::setCppOwnerShip(this);
     CONSOLE_PRINT("Entering Main Menue", GameConsole::eDEBUG);
+
 
     // load background
     changeBackground("mainmenu");

@@ -31,7 +31,7 @@ public:
     {
         m_quit = true;
     }
-    void loadResAnim(oxygine::spResAnim pAnim, QImage & image, qint32 columns, qint32  rows, float scaleFactor);
+    void loadResAnim(oxygine::spResAnim pAnim, QImage & image, qint32 columns, qint32  rows, float scaleFactor, bool clamp2Edge = true, quint32 linearFilter = 0);
     virtual bool isWorker() = 0;
     /**
          * @brief isWorkerRunning
@@ -108,7 +108,7 @@ public:
     QThread * getMainThread() const;
 
 signals:
-    void sigLoadSingleResAnim(oxygine::spResAnim pAnim, QImage image, qint32 columns, qint32 rows, float scaleFactor);
+    void sigLoadSingleResAnim(oxygine::spResAnim pAnim, QImage image, qint32 columns, qint32 rows, float scaleFactor, bool clamp2Edge = true, quint32 linearFilter = 0);
     void sigLoadRessources();
     void sigMousePressEvent(oxygine::MouseButton button, qint32 x, qint32 y);
     void sigMouseReleaseEvent(oxygine::MouseButton button, qint32 x, qint32 y);
@@ -120,7 +120,7 @@ signals:
     void sigShowKeyboard(bool visible);
 
 protected slots:
-    void loadSingleResAnim(oxygine::spResAnim pAnim, QImage image, qint32 columns, qint32 rows, float scaleFactor);
+    void loadSingleResAnim(oxygine::spResAnim pAnim, QImage image, qint32 columns, qint32 rows, float scaleFactor, bool clamp2Edge = true, quint32 linearFilter = 0);
     virtual void loadRessources(){}
 
     void quitApp();

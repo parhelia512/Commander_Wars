@@ -485,7 +485,7 @@ set_source_files_properties(${${PROJECT_NAME}_OpenNN_SRCS} PROPERTIES COMPILE_FL
 set_source_files_properties(${${PROJECT_NAME}_OpenNN_SRCS_ONLY} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 ###################################################################################
-# start stmp client stuff
+# start 2 factor authentication stuff
 ###################################################################################
 set(${PROJECT_NAME}_SmtpClient_SRCS
     3rd_party/smtpClient/src/emailaddress.cpp 3rd_party/smtpClient/src/emailaddress.h
@@ -508,10 +508,13 @@ set(${PROJECT_NAME}_SmtpClient_SRCS
     3rd_party/smtpClient/src/smtpclient.cpp 3rd_party/smtpClient/src/smtpclient.h
     3rd_party/smtpClient/src/SmtpMime
     3rd_party/smtpClient/src/mimeattachment.h
+
+    # qr code generation (Nayuki qrcodegen, MIT license)
+    3rd_party/qrcodegen/qrcodegen.cpp 3rd_party/qrcodegen/qrcodegen.hpp
 )
 
 ###################################################################################
-# end stmp client stuff
+# end 2 factor authentication stuff
 ###################################################################################
 
 ###################################################################################
@@ -547,6 +550,7 @@ set(${PROJECT_NAME}_SRCS
     objects/rotatingsprite.cpp objects/rotatingsprite.h
     objects/ruleselection.cpp objects/ruleselection.h
     objects/minimap.cpp objects/minimap.h
+    objects/qrcodeactor.cpp objects/qrcodeactor.h
     objects/perkselection.cpp objects/perkselection.h
     objects/mapselectionview.cpp objects/mapselectionview.h
     objects/loadingscreen.cpp objects/loadingscreen.h
@@ -711,6 +715,7 @@ set(${PROJECT_NAME}_SRCS
     network/networkInterface.h network/networkInterface.cpp
     network/networkgamedata.cpp network/networkgamedata.h
     network/mainserver.cpp network/mainserver.h
+    network/twoFactorAuthenticatorServer.h network/twoFactorAuthenticatorServer.cpp
     network/automatchmaker.h network/automatchmaker.cpp
     network/networkgame.cpp network/networkgame.h
     network/matchmakingcoordinator.h network/matchmakingcoordinator.cpp
@@ -836,6 +841,7 @@ set(${PROJECT_NAME}_SRCS
     multiplayer/multiplayermenu.cpp multiplayer/multiplayermenu.h
     multiplayer/gamedata.cpp multiplayer/gamedata.h
     multiplayer/password.cpp multiplayer/password.h
+    multiplayer/totp.cpp multiplayer/totp.h
     multiplayer/dialogpasswordandadress.cpp multiplayer/dialogpasswordandadress.h
     multiplayer/dialogpassword.cpp multiplayer/dialogpassword.h
     multiplayer/networkgamedataview.h multiplayer/networkgamedataview.cpp

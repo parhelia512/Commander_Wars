@@ -7,6 +7,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QDateTime>
+#include <QTextStream>
 
 #include "network/mainserver.h"
 #include "network/JsonKeys.h"
@@ -29,6 +30,7 @@ const char *const MainServer::SQL_PASSWORD = "password";
 const char *const MainServer::SQL_MAILADRESS = "mailAdress";
 const char *const MainServer::SQL_VALIDPASSWORD = "validPassword";
 const char *const MainServer::SQL_LASTLOGIN = "lastLogin";
+const char *const MainServer::SQL_TOTPSECRET = "totpSecret";
 
 const char *const MainServer::SQL_TABLE_PLAYERDATA = "playerData";
 const char *const MainServer::SQL_COID = "coid";
@@ -120,6 +122,7 @@ MainServer::MainServer()
     m_matchMakingCoordinator(this),
     m_mapFileServer(this),
     m_replayRecordFileserver(this),
+    m_twoFactorAuthenticatorServer(*this),
     m_mailSenderThread(this)
 {
     CONSOLE_PRINT("Game server launched", GameConsole::eDEBUG);
@@ -191,11 +194,13 @@ void MainServer::startDatabase()
                SQL_MAILADRESS + " TEXT, " +
                SQL_MMR + " INTEGER, " +
                SQL_VALIDPASSWORD + " INTEGER, " +
+               SQL_TOTPSECRET + " TEXT, " +
                SQL_LASTLOGIN + " TEXT)");
     if (sqlQueryFailed(query))
     {
         CONSOLE_PRINT("Unable to create player table error: " + m_serverData->lastError().nativeErrorCode(), GameConsole::eERROR);
     }
+    m_twoFactorAuthenticatorServer.migrateAddTotpDatabase(*m_serverData);
     // create table for map file server
     query.exec(QString("CREATE TABLE if not exists ") + SQL_TABLE_DOWNLOADMAPINFO + " (" +
                SQL_MAPPATH + " TEXT PRIMARY KEY, " +
@@ -341,6 +346,26 @@ void MainServer::recieveData(quint64 socketID, QByteArray data, NetworkInterface
         else if (messageType == NetworkCommands::RESETPASSWORD)
         {
             // resetAccountPassword(socketID, objData);
+        }
+        else if (messageType == NetworkCommands::START2FACTORRESETPASSWORD)
+        {
+            m_twoFactorAuthenticatorServer.startPasswordReset(socketID, objData);
+        }
+        else if (messageType == NetworkCommands::SUBMITPASSWORDRESET2FACODE)
+        {
+            m_twoFactorAuthenticatorServer.submitPasswordReset2faCode(socketID, objData);
+        }
+        else if (messageType == NetworkCommands::SETUP2FA)
+        {
+            m_twoFactorAuthenticatorServer.start2faSetup(socketID, objData);
+        }
+        else if (messageType == NetworkCommands::CONFIRM2FA)
+        {
+            m_twoFactorAuthenticatorServer.confirm2faSetup(socketID, objData);
+        }
+        else if (messageType == NetworkCommands::CANCEL2FA)
+        {
+            m_twoFactorAuthenticatorServer.cancel2fa(socketID, objData);
         }
         else if (messageType == NetworkCommands::CHANGEPASSWORD)
         {
@@ -1057,7 +1082,7 @@ void MainServer::slotStartRemoteGame(QString initScript, QString id)
 
 void MainServer::disconnected(qint64 socketId)
 {
-    // nothing to do.
+    m_twoFactorAuthenticatorServer.disconnectClient(socketId);
 }
 
 void MainServer::spawnSlaveGame(QDataStream &stream, quint64 socketID, QByteArray &data, QString initScript, QString id)
@@ -1292,9 +1317,10 @@ void MainServer::playerJoined(qint64 socketId)
 
 void MainServer::periodicTasks()
 {
-    // CONSOLE_PRINT("MainServer::periodicTasks", GameConsole::eDEBUG);
+    CONSOLE_PRINT("MainServer::periodicTasks", GameConsole::eDEBUG);
     cleanUpSuspendedGames(m_runningSlaves);
     cleanUpSuspendedGames(m_runningLobbies);
+    m_twoFactorAuthenticatorServer.cleanUpExpired2faSessions();
     executeScript();
     m_matchMakingCoordinator.periodicTasks();
 }
@@ -1526,6 +1552,7 @@ void MainServer::loginToAccount(qint64 socketId, const QJsonObject &objData)
     QJsonObject outData;
     outData.insert(JsonKeys::JSONKEY_COMMAND, command);
     outData.insert(JsonKeys::JSONKEY_ACCOUNT_ERROR, result);
+    outData.insert(JsonKeys::JSONKEY_HAS2FA, m_twoFactorAuthenticatorServer.hasTotpSecret(*m_serverData, username));
     QJsonDocument outDoc(outData);
     emit m_pGameServer->sig_sendData(socketId, outDoc.toJson(QJsonDocument::Compact), NetworkInterface::NetworkSerives::ServerHostingJson, false);
 }
@@ -1580,7 +1607,7 @@ GameEnums::LoginError MainServer::checkPassword(QSqlDatabase &database, const QS
         {
             result = GameEnums::LoginError_WrongPassword;
         }
-        if (outdatedPassword == 0)
+        else if (outdatedPassword == 0)
         {
             CONSOLE_PRINT("Account info for : " + username + " is out dated.", GameConsole::eDEBUG);
             result = GameEnums::LoginError_PasswordOutdated;
@@ -1631,7 +1658,8 @@ void MainServer::resetAccountPassword(qint64 socketId, const QJsonObject &objDat
                              SQL_PASSWORD + " = ?, " +
                              SQL_VALIDPASSWORD + " = 0 WHERE " +
                              SQL_USERNAME + " = ?;");
-            changeQuery.addBindValue(password.getHash().toHex());
+            auto hash = password.getHash().toHex();
+            changeQuery.addBindValue(hash);
             changeQuery.addBindValue(username);
             changeQuery.exec();
             if (!sqlQueryFailed(changeQuery))
@@ -1666,8 +1694,7 @@ void MainServer::resetAccountPassword(qint64 socketId, const QJsonObject &objDat
 }
 
 void MainServer::onMailSendResult(quint64 socketId, const QString receiverAddress, const QString username, bool result)
-{
-    QString command = QString(NetworkCommands::SERVERRESPONSRESETPASSWORD);
+{    QString command = QString(NetworkCommands::SERVERRESPONSRESETPASSWORD);
     GameEnums::LoginError mailSendResult = GameEnums::LoginError_None;
     if (!result)
     {
@@ -1681,53 +1708,62 @@ void MainServer::onMailSendResult(quint64 socketId, const QString receiverAddres
     emit m_pGameServer->sig_sendData(socketId, outDoc.toJson(QJsonDocument::Compact), NetworkInterface::NetworkSerives::ServerHostingJson, false);
 }
 
-QString MainServer::createRandomPassword() const
+// words are 4-9 letter, lowercase only dictionary entries; loaded once and cached for the process lifetime.
+static const QStringList& getPasswordWords()
 {
-    QString password;
-    QVector<char> specialChars = {'#', '?', '!', '@', '$', '%', '^', '&', '*', '-'};
-    auto specialCharPos = GlobalUtils::randInt(0, 7);
-    auto numberCharPos = GlobalUtils::randInt(0, 7);
-    while (numberCharPos == specialCharPos)
+    static QStringList words;
+    if (words.isEmpty())
     {
-        numberCharPos = GlobalUtils::randInt(0, 7);
-    }
-    bool smallLetter = false;
-    bool capitalLetter = false;
-    for (qint32 i = 0; i < 8; ++i)
-    {
-        if (i == specialCharPos)
+        QFile inputFile(":/system/password_words.txt");
+        if (inputFile.open(QIODevice::ReadOnly))
         {
-            password += specialChars[GlobalUtils::randInt(0, specialChars.length() - 1)];
-        }
-        else if (i == numberCharPos)
-        {
-            password += static_cast<char>(GlobalUtils::randInt('0', '9'));
-        }
-        else if (GlobalUtils::randInt(0, 1) == 1)
-        {
-            password += static_cast<char>(GlobalUtils::randInt('A', 'Z'));
-            capitalLetter = true;
-        }
-        else
-        {
-            password += static_cast<char>(GlobalUtils::randInt('a', 'z'));
-            smallLetter = true;
+            QTextStream in(&inputFile);
+            while (!in.atEnd())
+            {
+                QString line = in.readLine();
+                if (!line.isEmpty())
+                {
+                    words.append(line);
+                }
+            }
+            inputFile.close();
         }
     }
-    if (!smallLetter)
-    {
-        password += static_cast<char>(GlobalUtils::randInt('a', 'z'));
-    }
-    if (!capitalLetter)
-    {
-        password += static_cast<char>(GlobalUtils::randInt('A', 'Z'));
-    }
-    return password;
+    return words;
 }
 
-QSqlDatabase &MainServer::getDatabase()
+QString MainServer::createRandomPassword() const
 {
-    return *m_serverData;
+    // build a memorable passphrase out of random dictionary words instead of a random character soup.
+    const QStringList& words = getPasswordWords();
+    QString password;
+    if (words.size() < 8000)
+    {
+        CONSOLE_PRINT("Unable to load password word list. Falling back to an empty password.", GameConsole::eERROR);
+        Q_ASSERT(false);
+    }
+    else
+    {
+        qint32 wordCount = GlobalUtils::randInt(3, 4);
+        QStringList passwordWords;
+        for (qint32 i = 0; i < wordCount; ++i)
+        {
+            passwordWords.append(words[GlobalUtils::randInt(0, words.size() - 1)]);
+        }
+        password = passwordWords.join("-");
+        // replace one of the separating dashes with a random digit to add extra entropy
+        QVector<qint32> dashPositions;
+        for (qint32 i = 0; i < password.length(); ++i)
+        {
+            if (password[i] == QLatin1Char('-'))
+            {
+                dashPositions.append(i);
+            }
+        }
+        qint32 dashToReplace = dashPositions[GlobalUtils::randInt(0, dashPositions.size() - 1)];
+        password[dashToReplace] = static_cast<char>(GlobalUtils::randInt('0', '9'));
+    }
+    return password;
 }
 
 void MainServer::changeAccountPassword(qint64 socketId, const QJsonObject &objData)
@@ -1793,7 +1829,8 @@ QSqlQuery MainServer::getAccountInfo(QSqlDatabase &database, const QString &user
                SQL_MAILADRESS + ", " +
                SQL_MMR + ", " +
                SQL_VALIDPASSWORD + ", " +
-               SQL_LASTLOGIN +
+               SQL_LASTLOGIN + ", " +
+               SQL_TOTPSECRET +
                " from " + SQL_TABLE_PLAYERS +
                " WHERE " + SQL_USERNAME + " = ?;");
     query.addBindValue(username);

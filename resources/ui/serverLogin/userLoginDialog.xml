@@ -50,16 +50,16 @@
             </Passwordbox>
             <Button>
                 <Id>CreateAccountButton</Id>
-                <x>settings.getStageWidth() / 2 - 75 - 210</x>
+                <x>settings.getStageWidth() / 2 - 75 - 230</x>
                 <y>lastY + lastHeight + 20</y>
-                <width>200</width>
+                <width>230</width>
                 <text>UserLoginDialog.createAccountText()</text>
                 <tooltip>UserLoginDialog.createAccountTooltipText()</tooltip>
                 <onEvent>userLogin.createDialog("createAccount", "ui/serverLogin/createAccountDialog.xml", userLogin.getBaseMenu())</onEvent>
             </Button>
             <Button>
                 <Id>LoginButton</Id>
-                <x>settings.getStageWidth() / 2 - 75</x>
+                <x>lastX + lastWidth + 10</x>
                 <y>lastY</y>
                 <width>150</width>
                 <text>UserLoginDialog.loginText()</text>
@@ -67,27 +67,27 @@
                 <onEvent>UserLoginDialog.login();</onEvent>
             </Button>
             <Button>
-                <Id>ForgotPasswordButton</Id>
-                <x>settings.getStageWidth() / 2 + 75 + 10</x>
+                <Id>Setup2faButton</Id>
+                <x>lastX + lastWidth + 10</x>
                 <y>lastY</y>
-                <width>210</width>
+                <width>230</width>
+                <text>UserLoginDialog.setup2fa()</text>
+                <tooltip>UserLoginDialog.setup2faTooltip()</tooltip>
+                <onEvent>UserLoginDialog.openSetup2fa()</onEvent>
+                <enabled>false</enabled>
+            </Button>
+            <Button>
+                <Id>ForgotPasswordButton</Id>
+                <x>settings.getStageWidth() / 2 - 75 - 230</x>
+                <y>lastY + lastHeight + 20</y>
+                <width>230</width>
                 <text>UserLoginDialog.forgotPassword()</text>
                 <tooltip>UserLoginDialog.forgotPasswordTooltip()</tooltip>
                 <onEvent>userLogin.createDialog("forgotPassword", "ui/serverLogin/forgotPasswordDialog.xml", userLogin.getBaseMenu())</onEvent>
-                <visible>false</visible>
-            </Button>
-            <Button>
-                <Id>BackButton</Id>
-                <x>settings.getStageWidth() / 2 - 75 - 210</x>
-                <y>lastY  + lastHeight + 20</y>
-                <width>200</width>
-                <text>UserLoginDialog.back()</text>
-                <tooltip>UserLoginDialog.backTooltip()</tooltip>
-                <onEvent>userLogin.getBaseMenu().exitMenue()</onEvent>
             </Button>
             <Button>
                 <Id>LocalButton</Id>
-                <x>settings.getStageWidth() / 2 - 75</x>
+                <x>lastX + lastWidth + 10</x>
                 <y>lastY</y>
                 <width>150</width>
                 <text>UserLoginDialog.local()</text>
@@ -96,21 +96,40 @@
             </Button>
             <Button>
                 <Id>ChangePassword</Id>
-                <x>settings.getStageWidth() / 2 + 75 + 10</x>
+                <x>lastX + lastWidth + 10</x>
                 <y>lastY</y>
-                <width>210</width>
+                <width>230</width>
                 <text>UserLoginDialog.changePassword()</text>
                 <tooltip>UserLoginDialog.changePasswordTooltip()</tooltip>
                 <onEvent>userLogin.createDialog("changePassword", "ui/serverLogin/changePasswordDialog.xml", userLogin.getBaseMenu())</onEvent>
             </Button>
             <Button>
                 <Id>DeleteButton</Id>
-                <x>settings.getStageWidth() / 2 - 75</x>
+                <x>settings.getStageWidth() / 2 - 75 - 230</x>
                 <y>lastY + lastHeight + 20</y>
-                <width>150</width>
+                <width>230</width>
                 <text>UserLoginDialog.deleteText()</text>
                 <tooltip>UserLoginDialog.deleteTooltip()</tooltip>
                 <onEvent>userLogin.createDialog("deleteAccount", "ui/serverLogin/deleteAccountDialog.xml", userLogin.getBaseMenu())</onEvent>
+            </Button>
+            <Button>
+                <Id>BackButton</Id>
+                <x>lastX + lastWidth + 10</x>
+                <y>lastY</y>
+                <width>150</width>
+                <text>UserLoginDialog.back()</text>
+                <tooltip>UserLoginDialog.backTooltip()</tooltip>
+                <onEvent>userLogin.getBaseMenu().exitMenue()</onEvent>
+            </Button>
+            <Button>
+                <Id>ContinueButton</Id>
+                <x>lastX + lastWidth + 10</x>
+                <y>lastY</y>
+                <width>230</width>
+                <text>UserLoginDialog.continueText()</text>
+                <tooltip>UserLoginDialog.continueTooltip()</tooltip>
+                <onEvent>userLogin.exit()</onEvent>
+                <enabled>false</enabled>
             </Button>
         </childs>
     </Panel>

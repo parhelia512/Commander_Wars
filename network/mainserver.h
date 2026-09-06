@@ -14,6 +14,7 @@
 #include "network/mapfileserver.h"
 #include "network/replayrecordfileserver.h"
 #include "network/gatewayserver.h"
+#include "network/twoFactorAuthenticatorServer.h"
 
 #include "coreengine/fileserializable.h"
 
@@ -80,6 +81,7 @@ public:
     static const char* const SQL_MAILADRESS;
     static const char* const SQL_VALIDPASSWORD;
     static const char* const SQL_LASTLOGIN;
+    static const char* const SQL_TOTPSECRET;
     static const char* const SQL_TABLE_PLAYERDATA;
     static const char* const SQL_COID;
     static const char* const SQL_GAMESMADE;
@@ -126,7 +128,7 @@ public:
         spNetworkGame game;
         QString slaveName;
     };
-
+   
     static MainServer* getInstance();
     static bool exists();
     static void initDatabase();
@@ -142,7 +144,10 @@ public:
      * @brief getDatabase
      * @return
      */
-    QSqlDatabase & getDatabase();
+    QSqlDatabase & getDatabase()
+    {
+        return *m_serverData;
+    }
     /**
      * @brief sqlQueryFailed
      * @param query
@@ -224,6 +229,21 @@ public:
     void setUuidForGame(NetworkGameData & game);
     quint64 getNextSlaveGameIterator();
     void addGame(spInternNetworkGame & game);
+
+    /**
+     * @brief getAccountInfo
+     * @param username
+     * @param success
+     * @return
+     */
+    static QSqlQuery getAccountInfo(QSqlDatabase & database, const QString & username, bool & success);
+    /**
+     * @brief resetAccountPassword
+     * @param socketId
+     * @param doc
+     */
+    void resetAccountPassword(qint64 socketId, const QJsonObject & objData);
+
 signals:
     void sigRemoveGame(NetworkGame* pGame);
     void sigStartRemoteGame(QString initScript, QString id);
@@ -449,25 +469,12 @@ private:
      */
     static GameEnums::LoginError checkPassword(QSqlDatabase & database, const QString & username, const QByteArray & password);
     /**
-     * @brief resetAccountPassword
-     * @param socketId
-     * @param doc
-     */
-    void resetAccountPassword(qint64 socketId, const QJsonObject & objData);
-    /**
      * @brief changeAccountPassword
      * @param socketId
      * @param doc
      * @param action
      */
     void changeAccountPassword(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief getAccountInfo
-     * @param username
-     * @param success
-     * @return
-     */
-    static QSqlQuery getAccountInfo(QSqlDatabase & database, const QString & username, bool & success);
     /**
      * @brief sendMail
      * @param message
@@ -542,6 +549,7 @@ private:
     MatchMakingCoordinator m_matchMakingCoordinator;
     MapFileServer m_mapFileServer;
     ReplayRecordFileserver m_replayRecordFileserver;
+    TwoFactorAuthenticatorServer m_twoFactorAuthenticatorServer;
     /**
      * @brief m_serverData
      */

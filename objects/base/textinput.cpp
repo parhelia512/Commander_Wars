@@ -25,6 +25,7 @@ TextInput::TextInput()
     {
         connect(m_lineEdit.get(), &EventTextEdit::returnPressed, this, &TextInput::editFinished, Qt::QueuedConnection);
         connect(this, &TextInput::sigSetText, m_lineEdit.get(), &EventTextEdit::setPlainText, Qt::BlockingQueuedConnection);
+        connect(this, &TextInput::sigSetReadonlyToEdit, m_lineEdit.get(), &EventTextEdit::setEditableKeys, Qt::BlockingQueuedConnection);
     }
     m_toggle.start();
 }
@@ -103,6 +104,27 @@ void TextInput::setCursorPosition(qint32 position)
         auto cursor = m_lineEdit->textCursor();
         cursor.setPosition(position);
         m_lineEdit->setTextCursor(cursor);
+    }
+}
+
+bool TextInput::getReadonly() const
+{
+    return m_readonly;
+}
+
+void TextInput::setReadonly(bool readonly)
+{
+    m_readonly = readonly;
+    if (m_lineEdit != nullptr)
+    {
+        if (Mainapp::getInstance()->isMainThread())
+        {
+            m_lineEdit->setEditableKeys(!m_readonly);
+        }
+        else
+        {
+            emit sigSetReadonlyToEdit(!m_readonly);
+        }
     }
 }
 

@@ -864,6 +864,13 @@ public:
     Q_INVOKABLE bool getAutoShowAttackableFields() const;
     Q_INVOKABLE void setAutoShowAttackableFields(bool newAutoShowAttackableFields);
 
+    Q_INVOKABLE void setTotpSetupTimeoutMs(qint64 newTotpSetupTimeoutMs);
+    Q_INVOKABLE qint64 getTotpSetupTimeoutMs() const;
+    Q_INVOKABLE void setPasswordResetTimeoutMs(qint64 newPasswordResetTimeoutMs);
+    Q_INVOKABLE qint64 getPasswordResetTimeoutMs() const;
+    Q_INVOKABLE void setPasswordResetMaxAttempts(qint32 newPasswordResetMaxAttempts);
+    Q_INVOKABLE qint32 getPasswordResetMaxAttempts() const;
+
 private:
     friend class MemoryManagement;
     explicit Settings();
@@ -998,6 +1005,11 @@ private:
     QString m_mailServerPassword;
     QString m_mailServerSendAddress;
     qint32 m_mailServerAuthMethod{1};
+
+    // 2 factor authentication
+    qint64 m_totpSetupTimeoutMs{10 * 60 * 1000}; // 10 minutes
+    qint64 m_passwordResetTimeoutMs{5 * 60 * 1000}; // 5 minutes
+    qint32 m_passwordResetMaxAttempts{5};
 
     // auto saving
     std::chrono::seconds m_autoSavingCylceTime{std::chrono::minutes(0)};
