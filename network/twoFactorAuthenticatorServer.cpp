@@ -162,7 +162,8 @@ void TwoFactorAuthenticatorServer::submitPasswordReset2faCode(qint64 socketId, c
                             MainServer::SQL_PASSWORD + " = ?, " +
                             MainServer::SQL_VALIDPASSWORD + " = 0 WHERE " +
                             MainServer::SQL_USERNAME + " = ?;");
-        changeQuery.addBindValue(password.getHash().toHex());
+        auto hash = password.getHash().toHex();
+        changeQuery.addBindValue(hash);
         changeQuery.addBindValue(username);
         changeQuery.exec();
         if (!MainServer::sqlQueryFailed(changeQuery))

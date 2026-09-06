@@ -1606,7 +1606,7 @@ GameEnums::LoginError MainServer::checkPassword(QSqlDatabase &database, const QS
         {
             result = GameEnums::LoginError_WrongPassword;
         }
-        if (outdatedPassword == 0)
+        else if (outdatedPassword == 0)
         {
             CONSOLE_PRINT("Account info for : " + username + " is out dated.", GameConsole::eDEBUG);
             result = GameEnums::LoginError_PasswordOutdated;
@@ -1657,7 +1657,8 @@ void MainServer::resetAccountPassword(qint64 socketId, const QJsonObject &objDat
                              SQL_PASSWORD + " = ?, " +
                              SQL_VALIDPASSWORD + " = 0 WHERE " +
                              SQL_USERNAME + " = ?;");
-            changeQuery.addBindValue(password.getHash().toHex());
+            auto hash = password.getHash().toHex();
+            changeQuery.addBindValue(hash);
             changeQuery.addBindValue(username);
             changeQuery.exec();
             if (!sqlQueryFailed(changeQuery))
