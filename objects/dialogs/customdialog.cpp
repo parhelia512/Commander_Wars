@@ -7,9 +7,10 @@
 
 #include "ui_reader/uifactory.h"
 
-CustomDialog::CustomDialog(const QString & jsName, const QString & uiXml, Basemenu* pBaseMenu, const QString & confirmText)
+CustomDialog::CustomDialog(const QString & jsName, const QString & uiXml, Basemenu* pBaseMenu, const QString & confirmText, bool contentString)
     : m_jsName(jsName),
-      m_pBaseMenu(pBaseMenu)
+      m_pBaseMenu(pBaseMenu),
+      m_contentString(contentString)
 {
 #ifdef GRAPHICSUPPORT
     setObjectName("CustomDialog");
@@ -54,7 +55,14 @@ void CustomDialog::loadXmlFile(const QString& uiXml)
 {
     if (!uiXml.isEmpty())
     {
-        UiFactory::getInstance().createUi(uiXml, this);
+        if (m_contentString)
+        {
+            UiFactory::getInstance().createUiFromString(uiXml, this);
+        }
+        else
+        {
+            UiFactory::getInstance().createUi(uiXml, this);
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 #include "ui_reader/uifactory.h"
 
 #include <QtGlobal>
+#include <QTextStream>
 
 #include "resource_management/fontmanager.h"
 #include "resource_management/objectmanager.h"
@@ -215,11 +216,11 @@ void UiFactory::createUi(QString uiXml, CreatedGui* pMenu, oxygine::spActor root
         {
             if (QFile::exists(uiFile))
             {
-                QDomDocument document;
                 QFile file(uiFile);
                 if (file.open(QIODevice::ReadOnly))
                 {
                     bool success = false;
+                    QDomDocument document;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
                     auto result = document.setContent(&file);
                     bool loaded = static_cast<bool>(result);
@@ -234,78 +235,25 @@ void UiFactory::createUi(QString uiXml, CreatedGui* pMenu, oxygine::spActor root
 #endif
                     if (loaded)
                     {
-                        bool predefinedRoot = (root != nullptr);
-                        success = true;
-                        if (!predefinedRoot)
-                        {
-                            root = MemoryManagement::create<oxygine::Actor>();
-                        }
-                        auto rootElement = document.documentElement();
-
                         bool overwrite = false;
-                        QVariant value = QVariant(rootElement.attribute("overwrite"));
-                        if (value.typeId() == QMetaType::QString &&
-                            !value.isNull() &&
-                            rootElement.hasAttribute("overwrite"))
-                        {
-                            overwrite = value.toBool();
-                        }
-
-                        auto node = rootElement.firstChild();
-                        while (!node.isNull())
-                        {
-                            while (node.isComment())
-                            {
-                                node = node.nextSibling();
-                            }
-                            if (!node.isNull())
-                            {
-                                spPanel pPanel = std::dynamic_pointer_cast<Panel>(root);
-                                if (pPanel.get())
-                                {
-                                    success = loadPanelContent(node, pPanel, pMenu, 0);
-                                }
-                                else
-                                {
-                                    oxygine::spActor item;
-                                    success = createItem(root, node.toElement(), item, pMenu);
-                                }
-                                if (!success)
-                                {
-                                    CONSOLE_PRINT("Unknown item: " + node.toElement().nodeName() + " found. UI creation failed.", GameConsole::eERROR);
-                                }
-                                else
-                                {
-                                }
-                            }
-                            node = node.nextSibling();
-                        }
+                        success = createUiFromDocument(document, pMenu, root, overwrite);
                         if (success)
                         {
-                            if (!predefinedRoot)
+                            if (overwrite)
                             {
-                                pMenu->addFactoryUiItem(root);
-                                pMenu->addChild(root);
+                                break;
                             }
                         }
                         else
                         {
-                            CONSOLE_PRINT("Unable to load: " + uiFile, GameConsole::eERROR);
-                        }
-                        if (overwrite)
-                        {
-                            break;
+                            CONSOLE_PRINT("Unable to use: " + uiFile, GameConsole::eERROR);
                         }
                     }
                     else
                     {
-                        CONSOLE_PRINT("Unable to load: " + uiFile, GameConsole::eERROR);
+                        CONSOLE_PRINT("Failed to load: " + uiFile, GameConsole::eERROR);
                         CONSOLE_PRINT("Error: " + errorMessage + " at line " + QString::number(errorLine) + " at column " + QString::number(errorColumn), GameConsole::eERROR);
-                    }
-                    if (success)
-                    {
-                        break;
-                    }
+                    }                    
                 }
                 else
                 {
@@ -317,6 +265,74 @@ void UiFactory::createUi(QString uiXml, CreatedGui* pMenu, oxygine::spActor root
     }
 }
 
+void UiFactory::createUiFromString(const QString& uiXml, CreatedGui* pMenu, oxygine::spActor root)
+{
+    bool overwrite = false;
+    QDomDocument document;
+    document.setContent(uiXml);
+    createUiFromDocument(document, pMenu, root, overwrite);
+}
+
+bool UiFactory::createUiFromDocument(QDomDocument & document, CreatedGui* pMenu, oxygine::spActor root, bool & overwrite)
+{
+    bool predefinedRoot = (root != nullptr);
+    bool success = true;
+    if (!predefinedRoot)
+    {
+        root = MemoryManagement::create<oxygine::Actor>();
+    }
+    auto rootElement = document.documentElement();
+
+    QVariant value = QVariant(rootElement.attribute("overwrite"));
+    if (value.typeId() == QMetaType::QString &&
+        !value.isNull() &&
+        rootElement.hasAttribute("overwrite"))
+    {
+        overwrite = value.toBool();
+    }
+    auto node = rootElement.firstChild();
+    while (!node.isNull())
+        {
+            while (node.isComment())
+            {
+                node = node.nextSibling();
+            }
+            if (!node.isNull())
+            {
+                spPanel pPanel = std::dynamic_pointer_cast<Panel>(root);
+                if (pPanel.get())
+                {
+                    success = loadPanelContent(node, pPanel, pMenu, 0);
+                }
+                else
+                {
+                    oxygine::spActor item;
+                    success = createItem(root, node.toElement(), item, pMenu);
+                }
+                if (!success)
+                {
+                    CONSOLE_PRINT("Unknown item: " + node.toElement().nodeName() + " found. UI creation failed.", GameConsole::eERROR);
+                }
+                else
+                {
+                }
+            }
+            node = node.nextSibling();
+        }
+    if (success)
+    {
+        if (!predefinedRoot)
+        {
+            pMenu->addFactoryUiItem(root);
+            pMenu->addChild(root);
+        }
+    }
+    else
+    {
+        CONSOLE_PRINT("Unable to load content. Xml is invalid", GameConsole::eERROR);
+    }
+    return success;
+}
 
 
 bool UiFactory::loop(oxygine::spActor parent, QDomElement element, oxygine::spActor & item, CreatedGui* pMenu, qint32 loopIdx)
@@ -805,6 +821,7 @@ bool UiFactory::createQrCode(oxygine::spActor parent, QDomElement element, oxygi
     if (success)
     {
         QString id = getId(getStringValue(getAttribute(childs, attrId), "", loopIdx, pMenu));
+        QString content = getStringValue(getAttribute(childs, attrContent), id, loopIdx, pMenu);
         qint32 x = getIntValue(getAttribute(childs, attrX), id, loopIdx, pMenu);
         qint32 y = getIntValue(getAttribute(childs, attrY), id, loopIdx, pMenu);
         qint32 pixelPerModule = getIntValue(getAttribute(childs, attrPixelPerModule), id, loopIdx, pMenu, 4);
@@ -817,6 +834,7 @@ bool UiFactory::createQrCode(oxygine::spActor parent, QDomElement element, oxygi
         pQrCode->setEnabled(enabled);
         pQrCode->setPixelPerModule(pixelPerModule);
         pQrCode->setQuietZoneModules(quietZoneModules);
+        pQrCode->setQrData(content);
         if (!id.isEmpty())
         {
             pQrCode->setObjectName(id);

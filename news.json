@@ -1,0 +1,30 @@
+{
+    "content": [
+        "<?xml version=\"1.0\"?>",
+        "<ui>",
+        "    <Panel>",
+        "        <x>10</x>",
+        "        <y>10</y>",
+        "        <width>settings.getStageWidth() - 20</width>",
+        "        <height>settings.getStageHeight() - 80</height>",
+        "        <childs>",
+        "           <QrCode>",
+        "               <Id>QrCodeBox</Id>",
+        "               <x>settings.getStageWidth() / 2 - 100</x>",
+        "               <y>lastY + lastHeight + 30</y>",
+        "               <content>https://github.com/Robosturm/Commander_Wars/wiki/Beta-Release-39</content>",
+        "           </QrCode>",
+        "           <Label>",
+        "               <x>10</x>",
+        "               <y>lastY + lastHeight + 30</y>",
+        "               <width>settings.getStageWidth() - 80</width>",
+        "               <text>Awesome News</text>",
+        "               <font>\"main\"</font>",
+        "               <fontSize>24</fontSize>",
+        "               <hAlign>\"Middle\"</hAlign>",
+        "           </Label>",
+        "        </childs>",
+        "    </Panel>",        
+        "</ui>"
+    ]
+}

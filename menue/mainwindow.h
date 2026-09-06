@@ -2,6 +2,7 @@
 
 #include <QTimer>
 #include "menue/basemenu.h"
+#include "coreengine/newsDownloader.h"
 
 #include "game/GameEnums.h"
 
@@ -50,9 +51,11 @@ public slots:
 protected slots:
     void cheatTimeout();
     void unlockAllShopItems();
+    void onNewsDownloaded(bool newNews);
 protected:
     QTimer m_cheatTimeout;
     qint32 m_cheatCounter{0};
+    NewsDownloader m_newsDownloader;
 };
 
 Q_DECLARE_INTERFACE(Mainwindow, "Mainwindow");

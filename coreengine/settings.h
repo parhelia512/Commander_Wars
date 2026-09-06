@@ -871,6 +871,14 @@ public:
     Q_INVOKABLE void setPasswordResetMaxAttempts(qint32 newPasswordResetMaxAttempts);
     Q_INVOKABLE qint32 getPasswordResetMaxAttempts() const;
 
+    QString getNewsUrl() const;
+    QString getLastNewsHash() const;
+    void setLastNewsHash(const QString & newLastNewsHash);
+    bool getNewsDownloaded() const;
+    void setNewsDownloaded(bool newNewsDownloaded);
+    void setLastNews(const QString & newLastNews);
+    QString getLastNews() const;
+
 private:
     friend class MemoryManagement;
     explicit Settings();
@@ -1015,7 +1023,12 @@ private:
     std::chrono::seconds m_autoSavingCylceTime{std::chrono::minutes(0)};
     qint32 m_autoSavingCycle{0};
 
-
+    // ingame news handler
+    QString m_newsUrl;
+    QString m_lastNews;
+    QString m_lastNewsHash;
+    bool m_newsDownloaded{false};
+    
     // ingame options
     bool m_overworldAnimations{true};
     GameEnums::BattleAnimationMode m_battleAnimationsMode{GameEnums::BattleAnimationMode_All};

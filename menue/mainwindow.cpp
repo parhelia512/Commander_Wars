@@ -119,6 +119,9 @@ Mainwindow::Mainwindow(const QString & initialView)
     m_cheatTimeout.setSingleShot(true);
     connect(&m_cheatTimeout, &QTimer::timeout, this, &Mainwindow::cheatTimeout, Qt::QueuedConnection);
 
+    connect(&m_newsDownloader, &NewsDownloader::sigNewsDownloaded, this, &Mainwindow::onNewsDownloaded, Qt::QueuedConnection);
+    m_newsDownloader.startDownloadNews();
+
     pApp->continueRendering();
 }
 
@@ -475,5 +478,28 @@ void Mainwindow::createRandomInis(GameEnums::AiTypes ai, QString baseName, qint3
     for (qint32 i = 0; i < amount; ++i)
     {
         dynamic_cast<CoreAI*>(aiClass.get())->randomizeIni(baseName + QString::number(i) + ".ini", 1.0f, -1.0f);
+    }
+}
+
+void Mainwindow::onNewsDownloaded(bool newNews)
+{
+    if (newNews)
+    {
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(Settings::getInstance()->getLastNews().toUtf8());
+        QJsonObject jsonObj = jsonDoc.object();
+        QJsonArray contentArray = jsonObj["content"].toArray();
+        QString newsText;
+        for (const QJsonValue& value : contentArray)
+        {
+            if (value.isString())
+            {
+                newsText += value.toString() + "\n";
+            }
+        }
+        if (!newsText.isEmpty())
+        {
+            spCustomDialog pNewsBox = MemoryManagement::create<CustomDialog>("", newsText, this, tr("Ok"), true);
+            addChild(pNewsBox);
+        }        
     }
 }

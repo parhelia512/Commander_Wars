@@ -11,7 +11,7 @@ class CustomDialog : public CreatedGui
 {
     Q_OBJECT
 public:
-    explicit CustomDialog(const QString & jsName, const QString & uiXml, Basemenu* pBaseMenu, const QString & confirmText = "");
+    explicit CustomDialog(const QString & jsName, const QString & uiXml, Basemenu* pBaseMenu, const QString & confirmText = "", bool contentString = false);
     virtual ~CustomDialog();
 
 public slots:
@@ -57,6 +57,7 @@ protected:
     QString m_uiXml;
     Basemenu* m_pBaseMenu{nullptr};
     ScriptVariables m_Variables;
+    bool m_contentString{false};
 };
 
 Q_DECLARE_INTERFACE(CustomDialog, "CustomDialog");

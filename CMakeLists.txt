@@ -677,6 +677,7 @@ set(${PROJECT_NAME}_SRCS
     resource_management/ressourcemanagement.h
 
     # core engine
+    coreengine/newsDownloader.cpp coreengine/newsDownloader.h
     coreengine/mainapp.cpp coreengine/mainapp.h
     coreengine/settings.cpp coreengine/settings.h
     coreengine/interpreter.cpp coreengine/interpreter.h

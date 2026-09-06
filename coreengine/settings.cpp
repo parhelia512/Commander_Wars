@@ -1573,6 +1573,9 @@ void Settings::setup()
             MemoryManagement::create<Value<qint64>>("TwoFactorAuthentication", "TotpSetupTimeoutMs", &m_totpSetupTimeoutMs, 10 * 60 * 1000, 0, std::numeric_limits<qint64>::max()),
             MemoryManagement::create<Value<qint64>>("TwoFactorAuthentication", "PasswordResetTimeoutMs", &m_passwordResetTimeoutMs, 5 * 60 * 1000, 0, std::numeric_limits<qint64>::max()),
             MemoryManagement::create<Value<qint32>>("TwoFactorAuthentication", "PasswordResetMaxAttempts", &m_passwordResetMaxAttempts, 5, 0, std::numeric_limits<qint32>::max()),
+            // news
+            MemoryManagement::create<Value<QString>>("News", "NewsUrl", &m_newsUrl, "https://raw.githubusercontent.com/Robosturm/Commander_Wars/master/news.json", "", ""),
+            MemoryManagement::create<Value<QString>>("News", "LastNewsHash", &m_lastNewsHash, "", "", ""),
 
             // auto saving
             MemoryManagement::create<Value<std::chrono::seconds>>("Autosaving", "AutoSavingTime", &m_autoSavingCylceTime, std::chrono::seconds(60 * 5), std::chrono::seconds(0), std::chrono::seconds(60 * 60 * 24)),
@@ -2640,4 +2643,39 @@ void Settings::setPasswordResetMaxAttempts(qint32 newPasswordResetMaxAttempts)
 qint32 Settings::getPasswordResetMaxAttempts() const
 {
     return m_passwordResetMaxAttempts;
+}
+
+QString Settings::getNewsUrl() const
+{
+    return m_newsUrl;
+}
+
+QString Settings::getLastNewsHash() const
+{
+    return m_lastNewsHash;
+}
+
+void Settings::setLastNewsHash(const QString & newLastNewsHash)
+{
+    m_lastNewsHash = newLastNewsHash;
+}
+
+bool Settings::getNewsDownloaded() const
+{
+    return m_newsDownloaded;
+}
+
+void Settings::setNewsDownloaded(bool newNewsDownloaded)
+{
+    m_newsDownloaded = newNewsDownloaded;
+}
+
+void Settings::setLastNews(const QString & newLastNews)
+{
+    m_lastNews = newLastNews;
+}
+
+QString Settings::getLastNews() const
+{
+    return m_lastNews;
 }

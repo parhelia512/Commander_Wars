@@ -325,7 +325,6 @@ protected:
     bool keyInputMethodEvent(QInputMethodEvent *event);
     virtual bool event(QEvent *ev) override;    
     virtual void onQuit() override;
-
 private:
     spEventTextEdit m_pLineEdit;
 

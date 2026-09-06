@@ -41,6 +41,14 @@ public:
      */
     void createUi(QString uiXml, CreatedGui* pMenu, oxygine::spActor root = nullptr);
     /**
+     * 
+     */
+    void createUiFromString(const QString& uiXml, CreatedGui* pMenu, oxygine::spActor root = nullptr);
+    /**
+     * @brief createUiFromStream
+     */
+    bool createUiFromDocument(QDomDocument & document, CreatedGui* pMenu, oxygine::spActor root, bool & overwrite);
+    /**
      * @brief getFactoryItems
      * @return
      */
