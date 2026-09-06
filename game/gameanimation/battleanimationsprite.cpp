@@ -98,26 +98,11 @@ void BattleAnimationSprite::loadAnimation(QString animationType, Unit* pUnit, Un
     QVector<QVector<oxygine::spSprite>> buffer;
     if (!clearSprite && m_nextFrames.length() > 0)
     {
-        for (auto & unitFrame : m_nextFrames[m_nextFrames.length() - 1])
-        {
-            buffer.append(QVector<oxygine::spSprite>());
-            for (auto & sprite : unitFrame)
-            {
-                buffer[buffer.length() - 1].append(sprite);
-            }
-        }
-        m_nextFrames.removeAt(m_nextFrames.length() - 1);
+        buffer = m_nextFrames.takeLast();
     }
     else if (!clearSprite)
     {
-        for (auto & unitFrame : m_currentFrame)
-        {
-            buffer.append(QVector<oxygine::spSprite>());
-            for (auto & sprite : unitFrame)
-            {
-                buffer[buffer.length() - 1].append(sprite);
-            }
-        }
+        buffer = m_currentFrame;
     }
     bool startFrame = false;
     if (m_nextFrames.length() == 0)
@@ -132,18 +117,16 @@ void BattleAnimationSprite::loadAnimation(QString animationType, Unit* pUnit, Un
     }
     if (!clearSprite)
     {
-        for (qint32 i = 0; i <  buffer.size(); ++i)
+        while (m_nextFrames.last().size() < buffer.size())
         {
-            if (i >= m_nextFrames[m_nextFrames.length() - 1].size())
-            {
-                m_nextFrames[m_nextFrames.length() - 1].append(QVector<oxygine::spSprite>());
-            }
+            m_nextFrames.last().append(QVector<oxygine::spSprite>());
         }
-        for (qint32 i = buffer.size() - 1; i >= 0 ; --i)
+        for (qint32 i = 0; i < buffer.size(); ++i)
         {
-            for (auto & sprite : buffer[i])
+            if (!buffer[i].isEmpty())
             {
-                m_nextFrames[m_nextFrames.length() - 1][i].prepend(sprite);
+                auto & target = m_nextFrames.last()[i];
+                target = buffer[i] + target;
             }
         }
     }
@@ -917,20 +900,31 @@ void BattleAnimationSprite::stopSound(bool forceStop)
 {
     Mainapp* pApp = Mainapp::getInstance();
     AudioManager* pAudio = pApp->getAudioManager();
-    qint32 i = 0;
-    while (i < m_Sounds.size())
+    if (forceStop)
     {
-        if (m_Sounds[i].loops < 0 || forceStop ||
-            Settings::getInstance()->getBattleAnimationSpeedValue() > 10)
+        for (const auto & data : m_Sounds)
         {
-            pAudio->stopSound(m_Sounds[i].sound);
-            m_Sounds.removeAt(i);
+            pAudio->stopSound(data.sound);
         }
-        else
-        {
-            ++i;
-        }
+        m_Sounds.clear();
     }
+    else
+    {
+        bool speedFast = Settings::getInstance()->getBattleAnimationSpeedValue() > 10;
+        qint32 i = 0;
+        while (i < m_Sounds.size())
+        {
+            if (m_Sounds[i].loops < 0 || speedFast)
+            {
+                pAudio->stopSound(m_Sounds[i].sound);
+                m_Sounds.removeAt(i);
+            }
+            else
+            {
+                ++i;
+            }
+        }
+    }   
 }
 
 void BattleAnimationSprite::setUnitFrameDelay(qint32 delay)
@@ -953,16 +947,17 @@ void BattleAnimationSprite::startNextUnitFrames()
     if (m_currentFrame.size() == 0 && !m_startWithFraming)
     {
         // add initial frames
-        for (auto & unitFrame : m_nextFrames[0])
+        if (!m_nextFrames.isEmpty())
         {
-            m_currentFrame.append(QVector<oxygine::spSprite>());
-            for (auto & sprite : unitFrame)
+            m_currentFrame = m_nextFrames.takeFirst();
+            for (auto & unitFrame : m_currentFrame)
             {
-                m_Actor->addChild(sprite);
-                m_currentFrame[m_currentFrame.length() - 1].append(sprite);
+                for (auto & sprite : unitFrame)
+                {
+                    m_Actor->addChild(sprite);
+                }
             }
         }
-        m_nextFrames.removeFirst();
     }
     else
     {

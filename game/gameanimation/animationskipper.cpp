@@ -15,45 +15,48 @@ void AnimationSkipper::startSeeking()
 
 void AnimationSkipper::disableAllAnimations()
 {
-    Settings::getInstance()->setOverworldAnimations(false);
-    Settings::getInstance()->setBattleAnimationMode(GameEnums::BattleAnimationMode::BattleAnimationMode_None);
-    Settings::getInstance()->setDialogAnimation(false);
-    Settings::getInstance()->setCaptureAnimation(false);
-    Settings::getInstance()->setMovementAnimations(false);
-    Settings::getInstance()->setDay2dayScreen(false);
-    Settings::getInstance()->setAnimationSpeed(100);
-    Settings::getInstance()->setBattleAnimationSpeed(100);
-    Settings::getInstance()->setDialogAnimationSpeed(100);
-    Settings::getInstance()->setCaptureAnimationSpeed(100);
+    Settings* pSettings = Settings::getInstance();
+    pSettings->setOverworldAnimations(false);
+    pSettings->setBattleAnimationMode(GameEnums::BattleAnimationMode::BattleAnimationMode_None);
+    pSettings->setDialogAnimation(false);
+    pSettings->setCaptureAnimation(false);
+    pSettings->setMovementAnimations(false);
+    pSettings->setDay2dayScreen(false);
+    pSettings->setAnimationSpeed(100);
+    pSettings->setBattleAnimationSpeed(100);
+    pSettings->setDialogAnimationSpeed(100);
+    pSettings->setCaptureAnimationSpeed(100);
 }
 
 void AnimationSkipper::storeAnimationSettings()
 {
+    Settings* pSettings = Settings::getInstance();
     // store animation modes
-    m_storedOverworldAnimations = Settings::getInstance()->getOverworldAnimations();
-    m_storedBattleAnimMode = Settings::getInstance()->getBattleAnimationMode();
-    m_storedBatteAnimType = Settings::getInstance()->getBattleAnimationType();
-    m_storedDialog = Settings::getInstance()->getDialogAnimation();
-    m_storedCaptureAnimation = Settings::getInstance()->getCaptureAnimation();
-    m_storedMovementAnimation = Settings::getInstance()->getMovementAnimations();
-    m_storedDay2DayAnimation = Settings::getInstance()->getDay2dayScreen();
-    m_storedAnimationSpeed = Settings::getInstance()->getAnimationSpeedValue();
-    m_storedBattleAnimationSpeed = Settings::getInstance()->getBattleAnimationSpeedValue();
-    m_storedDialogAnimationSpeed = Settings::getInstance()->getDialogAnimationSpeedValue();
-    m_storedCaptureAnimationSpeed = Settings::getInstance()->getCaptureAnimationSpeedValue();
+    m_storedOverworldAnimations = pSettings->getOverworldAnimations();
+    m_storedBattleAnimMode = pSettings->getBattleAnimationMode();
+    m_storedBatteAnimType = pSettings->getBattleAnimationType();
+    m_storedDialog = pSettings->getDialogAnimation();
+    m_storedCaptureAnimation = pSettings->getCaptureAnimation();
+    m_storedMovementAnimation = pSettings->getMovementAnimations();
+    m_storedDay2DayAnimation = pSettings->getDay2dayScreen();
+    m_storedAnimationSpeed = pSettings->getAnimationSpeedValue();
+    m_storedBattleAnimationSpeed = pSettings->getBattleAnimationSpeedValue();
+    m_storedDialogAnimationSpeed = pSettings->getDialogAnimationSpeedValue();
+    m_storedCaptureAnimationSpeed = pSettings->getCaptureAnimationSpeedValue();
 }
 
 void AnimationSkipper::restoreAnimationSettings()
 {
-    Settings::getInstance()->setOverworldAnimations(m_storedOverworldAnimations);
-    Settings::getInstance()->setBattleAnimationMode(m_storedBattleAnimMode);
-    Settings::getInstance()->setBattleAnimationType(m_storedBatteAnimType);
-    Settings::getInstance()->setDialogAnimation(m_storedDialog);
-    Settings::getInstance()->setCaptureAnimation(m_storedCaptureAnimation);
-    Settings::getInstance()->setMovementAnimations(m_storedMovementAnimation);
-    Settings::getInstance()->setDay2dayScreen(m_storedDay2DayAnimation);
-    Settings::getInstance()->setAnimationSpeed(m_storedAnimationSpeed);
-    Settings::getInstance()->setBattleAnimationSpeed(m_storedBattleAnimationSpeed);
-    Settings::getInstance()->setDialogAnimationSpeed(m_storedDialogAnimationSpeed);
-    Settings::getInstance()->setCaptureAnimationSpeed(m_storedCaptureAnimationSpeed);
+    Settings* pSettings = Settings::getInstance();
+    pSettings->setOverworldAnimations(m_storedOverworldAnimations);
+    pSettings->setBattleAnimationMode(m_storedBattleAnimMode);
+    pSettings->setBattleAnimationType(m_storedBatteAnimType);
+    pSettings->setDialogAnimation(m_storedDialog);
+    pSettings->setCaptureAnimation(m_storedCaptureAnimation);
+    pSettings->setMovementAnimations(m_storedMovementAnimation);
+    pSettings->setDay2dayScreen(m_storedDay2DayAnimation);
+    pSettings->setAnimationSpeed(m_storedAnimationSpeed);
+    pSettings->setBattleAnimationSpeed(m_storedBattleAnimationSpeed);
+    pSettings->setDialogAnimationSpeed(m_storedDialogAnimationSpeed);
+    pSettings->setCaptureAnimationSpeed(m_storedCaptureAnimationSpeed);
 }

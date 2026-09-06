@@ -84,9 +84,9 @@ void GameAnimation::start()
 
 void GameAnimation::doPreAnimationCall()
 {
-    if ((!m_jsPreActionObject.isEmpty()) && (!m_jsPreActionObject.isEmpty()))
+    if ((!m_jsPreActionObject.isEmpty()) && (!m_jsPreActionFunction.isEmpty()))
     {
-        CONSOLE_PRINT("Calling post Animation function " + m_jsPreActionObject + "." + m_jsPreActionFunction, GameConsole::eDEBUG);
+        CONSOLE_PRINT("Calling pre Animation function " + m_jsPreActionObject + "." + m_jsPreActionFunction, GameConsole::eDEBUG);
         Interpreter* pInterpreter = Interpreter::getInstance();
         QJSValueList args({pInterpreter->newQObject(this),
                            GameMap::getMapJsThis(m_pMap)});
@@ -168,16 +168,12 @@ void GameAnimation::queueAnimationBefore(GameAnimation* pGameAnimation)
 
 void GameAnimation::removeQueuedAnimation(GameAnimation* pGameAnimation)
 {
-    qint32 i = 0;
-    while (i < m_QueuedAnimations.size())
+    for (qint32 i = 0; i < m_QueuedAnimations.size(); ++i)
     {
         if (m_QueuedAnimations[i].get() == pGameAnimation)
         {
             m_QueuedAnimations.removeAt(i);
-        }
-        else
-        {
-            i++;
+            break;
         }
     }
 }
@@ -448,7 +444,7 @@ bool GameAnimation::onFinished(bool skipping)
             pGameAnimationFactory->startQueuedAnimation(m_QueuedAnimations[i].get());
         }
         m_QueuedAnimations.clear();
-        if ((!m_jsPostActionObject.isEmpty()) && (!m_jsPostActionObject.isEmpty()))
+        if ((!m_jsPostActionObject.isEmpty()) && (!m_jsPostActionFunction.isEmpty()))
         {
             CONSOLE_PRINT("Calling post Animation function " + m_jsPostActionObject + "." + m_jsPostActionFunction, GameConsole::eDEBUG);
             Interpreter* pInterpreter = Interpreter::getInstance();
