@@ -5,5 +5,6 @@
         <file>system/frac_matrix_shader.glsl</file>
         <file>system/vertex_shader.glsl</file>
         <file>system/startup_messages.txt</file>
+        <file>system/password_words.txt</file>
     </qresource>
 </RCC>

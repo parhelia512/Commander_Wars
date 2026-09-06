@@ -7,6 +7,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QDateTime>
+#include <QTextStream>
 
 #include "network/mainserver.h"
 #include "network/JsonKeys.h"
@@ -1707,46 +1708,60 @@ void MainServer::onMailSendResult(quint64 socketId, const QString receiverAddres
     emit m_pGameServer->sig_sendData(socketId, outDoc.toJson(QJsonDocument::Compact), NetworkInterface::NetworkSerives::ServerHostingJson, false);
 }
 
+// words are 4-9 letter, lowercase only dictionary entries; loaded once and cached for the process lifetime.
+static const QStringList& getPasswordWords()
+{
+    static QStringList words;
+    if (words.isEmpty())
+    {
+        QFile inputFile(":/system/password_words.txt");
+        if (inputFile.open(QIODevice::ReadOnly))
+        {
+            QTextStream in(&inputFile);
+            while (!in.atEnd())
+            {
+                QString line = in.readLine();
+                if (!line.isEmpty())
+                {
+                    words.append(line);
+                }
+            }
+            inputFile.close();
+        }
+    }
+    return words;
+}
+
 QString MainServer::createRandomPassword() const
 {
+    // build a memorable passphrase out of random dictionary words instead of a random character soup.
+    const QStringList& words = getPasswordWords();
     QString password;
-    QVector<char> specialChars = {'#', '?', '!', '@', '$', '%', '^', '&', '*', '-'};
-    auto specialCharPos = GlobalUtils::randInt(0, 7);
-    auto numberCharPos = GlobalUtils::randInt(0, 7);
-    while (numberCharPos == specialCharPos)
+    if (words.size() < 8000)
     {
-        numberCharPos = GlobalUtils::randInt(0, 7);
+        CONSOLE_PRINT("Unable to load password word list. Falling back to an empty password.", GameConsole::eERROR);
+        Q_ASSERT(false);
     }
-    bool smallLetter = false;
-    bool capitalLetter = false;
-    for (qint32 i = 0; i < 8; ++i)
+    else
     {
-        if (i == specialCharPos)
+        qint32 wordCount = GlobalUtils::randInt(3, 4);
+        QStringList passwordWords;
+        for (qint32 i = 0; i < wordCount; ++i)
         {
-            password += specialChars[GlobalUtils::randInt(0, specialChars.length() - 1)];
+            passwordWords.append(words[GlobalUtils::randInt(0, words.size() - 1)]);
         }
-        else if (i == numberCharPos)
+        password = passwordWords.join("-");
+        // replace one of the separating dashes with a random digit to add extra entropy
+        QVector<qint32> dashPositions;
+        for (qint32 i = 0; i < password.length(); ++i)
         {
-            password += static_cast<char>(GlobalUtils::randInt('0', '9'));
+            if (password[i] == QLatin1Char('-'))
+            {
+                dashPositions.append(i);
+            }
         }
-        else if (GlobalUtils::randInt(0, 1) == 1)
-        {
-            password += static_cast<char>(GlobalUtils::randInt('A', 'Z'));
-            capitalLetter = true;
-        }
-        else
-        {
-            password += static_cast<char>(GlobalUtils::randInt('a', 'z'));
-            smallLetter = true;
-        }
-    }
-    if (!smallLetter)
-    {
-        password += static_cast<char>(GlobalUtils::randInt('a', 'z'));
-    }
-    if (!capitalLetter)
-    {
-        password += static_cast<char>(GlobalUtils::randInt('A', 'Z'));
+        qint32 dashToReplace = dashPositions[GlobalUtils::randInt(0, dashPositions.size() - 1)];
+        password[dashToReplace] = static_cast<char>(GlobalUtils::randInt('0', '9'));
     }
     return password;
 }
