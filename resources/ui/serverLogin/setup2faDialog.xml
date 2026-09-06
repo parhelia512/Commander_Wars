@@ -17,12 +17,13 @@
             </Label>
             <Label>
                 <Id>InfoLabel</Id>
-                <x>40</x>
-                <y>lastY + lastHeight + 20</y>
+                <x>10</x>
+                <y>lastY + lastHeight + 10</y>
                 <width>parentWidth - 80</width>
                 <text>Setup2faDialog.infoText()</text>
                 <font>"main"</font>
-                <fontSize>20</fontSize>
+                <fontSize>24</fontSize>
+                <multiline>true</multiline>
             </Label>
             <QrCode>
                 <Id>QrCodeBox</Id>
@@ -31,8 +32,8 @@
             </QrCode>
             <Label>
                 <x>settings.getStageWidth() / 2 - 310</x>
-                <y>lastY + lastHeight + 30</y>
-                <width>220</width>
+                <y>lastY + lastHeight + 50</y>
+                <width>100</width>
                 <text>Setup2faDialog.secretText()</text>
                 <font>"main"</font>
                 <fontSize>24</fontSize>
@@ -41,14 +42,16 @@
                 <Id>SecretBox</Id>
                 <x>lastX + lastWidth + 10</x>
                 <y>lastY</y>
-                <width>400</width>
+                <width>600</width>
                 <tooltip>Setup2faDialog.secretTooltip()</tooltip>
                 <startValue>""</startValue>
+                <onEvent></onEvent>
+                <readonly>true</readonly>
             </Textbox>
             <Label>
                 <x>settings.getStageWidth() / 2 - 310</x>
                 <y>lastY + lastHeight + 20</y>
-                <width>220</width>
+                <width>100</width>
                 <text>Setup2faDialog.codeText()</text>
                 <font>"main"</font>
                 <fontSize>24</fontSize>
@@ -57,7 +60,7 @@
                 <Id>CodeBox</Id>
                 <x>lastX + lastWidth + 10</x>
                 <y>lastY</y>
-                <width>150</width>
+                <width>600</width>
                 <tooltip>Setup2faDialog.codeTooltip()</tooltip>
                 <startValue>""</startValue>
                 <onEvent>Setup2faDialog.codeInput(input);</onEvent>

@@ -485,7 +485,7 @@ set_source_files_properties(${${PROJECT_NAME}_OpenNN_SRCS} PROPERTIES COMPILE_FL
 set_source_files_properties(${${PROJECT_NAME}_OpenNN_SRCS_ONLY} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 ###################################################################################
-# start stmp client stuff
+# start 2 factor authentication stuff
 ###################################################################################
 set(${PROJECT_NAME}_SmtpClient_SRCS
     3rd_party/smtpClient/src/emailaddress.cpp 3rd_party/smtpClient/src/emailaddress.h
@@ -514,7 +514,7 @@ set(${PROJECT_NAME}_SmtpClient_SRCS
 )
 
 ###################################################################################
-# end stmp client stuff
+# end 2 factor authentication stuff
 ###################################################################################
 
 ###################################################################################
@@ -715,6 +715,7 @@ set(${PROJECT_NAME}_SRCS
     network/networkInterface.h network/networkInterface.cpp
     network/networkgamedata.cpp network/networkgamedata.h
     network/mainserver.cpp network/mainserver.h
+    network/twoFactorAuthenticatorServer.h network/twoFactorAuthenticatorServer.cpp
     network/automatchmaker.h network/automatchmaker.cpp
     network/networkgame.cpp network/networkgame.h
     network/matchmakingcoordinator.h network/matchmakingcoordinator.cpp

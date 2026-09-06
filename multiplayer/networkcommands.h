@@ -383,6 +383,7 @@ namespace NetworkCommands
     const char* const CREATEACCOUNT = "CREATEACCOUNT";
     const char* const LOGINACCOUNT = "LOGINACCOUNT";
     const char* const RESETPASSWORD = "RESETPASSWORD";
+    const char* const START2FACTORRESETPASSWORD = "START2FACTORRESETPASSWORD";
     const char* const CHANGEPASSWORD = "CHANGEPASSWORD";
     const char* const REQUESTLOGINDDATA = "REQUESTLOGINDDATA";
     const char* const DELETEACCOUNT = "DELETEACCOUNT";

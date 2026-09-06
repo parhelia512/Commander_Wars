@@ -24,8 +24,18 @@ public:
     Q_INVOKABLE void setCurrentText(const QString text);
     Q_INVOKABLE qint32 getCursorPosition() const;
     Q_INVOKABLE void setCursorPosition(qint32 position);
+    Q_INVOKABLE bool getReadonly() const;
+    /**
+     * @brief setReadonly changes the readonly mode of this textbox.
+     * In readonly mode the shown text can't be modified by user input,
+     * but it can still be selected and copied, the texteditor can be focused
+     * and the cursor can still be moved.
+     * @param readonly
+     */
+    Q_INVOKABLE void setReadonly(bool readonly);
 signals:
     void sigSetText(const QString text);
+    void sigSetReadonly(const bool readonly);
 public slots:
     virtual void focusedLost() override;
 
@@ -50,6 +60,7 @@ protected:
     QElapsedTimer m_toggle;
     qint32 m_focusPosition{-1};
     bool m_multiline{false};
+    bool m_readonly{false};
 };
 
 Q_DECLARE_INTERFACE(TextInput, "TextInput");

@@ -35,6 +35,7 @@ public:
     Q_INVOKABLE bool getServerRequestNewPassword() const;
     Q_INVOKABLE void setServerRequestNewPassword(bool newServerRequestNewPassword);
     Q_INVOKABLE void onLogin();
+    Q_INVOKABLE void onLogout();
     Q_INVOKABLE bool isValidEmailAdress(const QString emailAdress);
     Q_INVOKABLE bool isValidPassword(const QString password);
     Q_INVOKABLE void leaveServer();
@@ -42,6 +43,7 @@ public:
     Q_INVOKABLE void deleteServerAccount(const QString password, const QString emailAdress);
     Q_INVOKABLE void loginToServerAccount(const QString password);
     Q_INVOKABLE void resetPasswordOnServerAccount(const QString emailAdress);
+    Q_INVOKABLE void start2faResetPassword(const QString emailAdress);
     Q_INVOKABLE void changePasswordOnServerAccount(const QString oldServerPassword, const QString newServerPassword);
     /**
      * @brief requestServer2faSetup starts the optional 2fa enrollment on the server for the current account

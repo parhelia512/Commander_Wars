@@ -857,6 +857,16 @@ void LobbyMenu::onLogin()
     requestServerGames();
 }
 
+void LobbyMenu::onLogout()
+{
+    enableServerButtons(false);
+    m_loggedIn = false;
+    m_games.clear();
+    m_currentGame = NetworkGameData();
+    m_gamesview->setItems(ComplexTableView::Items());
+    Settings::getInstance()->setServerPassword("");
+}
+
 void LobbyMenu::onEnter()
 {
     Interpreter *pInterpreter = Interpreter::getInstance();
@@ -986,6 +996,18 @@ void LobbyMenu::loginToServerAccount(const QString passwordString)
 void LobbyMenu::resetPasswordOnServerAccount(const QString emailAdress)
 {
     QString command = NetworkCommands::RESETPASSWORD;
+    CONSOLE_PRINT("Sending command " + command, GameConsole::eDEBUG);
+    QJsonObject data;
+    data.insert(JsonKeys::JSONKEY_COMMAND, command);
+    data.insert(JsonKeys::JSONKEY_EMAILADRESS, emailAdress);
+    data.insert(JsonKeys::JSONKEY_USERNAME, Settings::getInstance()->getUsername());
+    QJsonDocument doc(data);
+    emit m_pTCPClient->sig_sendData(0, doc.toJson(QJsonDocument::JsonFormat::Compact), NetworkInterface::NetworkSerives::ServerHostingJson, false);
+}
+
+void LobbyMenu::start2faResetPassword(const QString emailAdress)
+{
+    QString command = NetworkCommands::START2FACTORRESETPASSWORD;
     CONSOLE_PRINT("Sending command " + command, GameConsole::eDEBUG);
     QJsonObject data;
     data.insert(JsonKeys::JSONKEY_COMMAND, command);

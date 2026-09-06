@@ -14,6 +14,7 @@
 #include "network/mapfileserver.h"
 #include "network/replayrecordfileserver.h"
 #include "network/gatewayserver.h"
+#include "network/twoFactorAuthenticatorServer.h"
 
 #include "coreengine/fileserializable.h"
 
@@ -127,37 +128,7 @@ public:
         spNetworkGame game;
         QString slaveName;
     };
-    /**
-     * @brief The TotpEnrollment struct a pending 2 factor authentication setup, confirmed once the user enters a valid totp code
-     */
-    struct TotpEnrollment
-    {
-        QString username;
-        QString base32Secret;
-        QDateTime created;
-    };
-    /**
-     * @brief The PasswordResetSession struct a pending totp based password reset of one client
-     */
-    struct PasswordResetSession
-    {
-        QString username;
-        QDateTime created;
-        qint32 attempts{0};
-    };
-    /**
-     * @brief TOTP_SETUP_TIMEOUT_MS time after which a pending 2fa setup is dropped
-     */
-    static constexpr qint64 TOTP_SETUP_TIMEOUT_MS = 10 * 60 * 1000;
-    /**
-     * @brief PASSWORD_RESET_TIMEOUT_MS time after which a pending password reset is dropped and the client gets informed
-     */
-    static constexpr qint64 PASSWORD_RESET_TIMEOUT_MS = 5 * 60 * 1000;
-    /**
-     * @brief PASSWORD_RESET_MAX_ATTEMPTS max amount of wrong totp codes per password reset session
-     */
-    static constexpr qint32 PASSWORD_RESET_MAX_ATTEMPTS = 5;
-
+   
     static MainServer* getInstance();
     static bool exists();
     static void initDatabase();
@@ -173,7 +144,10 @@ public:
      * @brief getDatabase
      * @return
      */
-    QSqlDatabase & getDatabase();
+    QSqlDatabase & getDatabase()
+    {
+        return *m_serverData;
+    }
     /**
      * @brief sqlQueryFailed
      * @param query
@@ -255,6 +229,21 @@ public:
     void setUuidForGame(NetworkGameData & game);
     quint64 getNextSlaveGameIterator();
     void addGame(spInternNetworkGame & game);
+
+    /**
+     * @brief getAccountInfo
+     * @param username
+     * @param success
+     * @return
+     */
+    static QSqlQuery getAccountInfo(QSqlDatabase & database, const QString & username, bool & success);
+    /**
+     * @brief resetAccountPassword
+     * @param socketId
+     * @param doc
+     */
+    void resetAccountPassword(qint64 socketId, const QJsonObject & objData);
+
 signals:
     void sigRemoveGame(NetworkGame* pGame);
     void sigStartRemoteGame(QString initScript, QString id);
@@ -480,89 +469,12 @@ private:
      */
     static GameEnums::LoginError checkPassword(QSqlDatabase & database, const QString & username, const QByteArray & password);
     /**
-     * @brief resetAccountPassword
-     * @param socketId
-     * @param doc
-     */
-    void resetAccountPassword(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief start2faSetup starts the optional 2fa enrollment for the logged in account of the given socket
-     * @param socketId
-     * @param objData
-     */
-    void start2faSetup(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief confirm2faSetup confirms a pending 2fa enrollment with a totp code of the user's app
-     * @param socketId
-     * @param objData
-     */
-    void confirm2faSetup(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief cancel2fa cancels a pending 2fa enrollment and a pending password reset of the socket
-     * @param socketId
-     * @param objData
-     */
-    void cancel2fa(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief startPasswordReset starts the password reset workflow, totp based for accounts with 2fa, mail based else
-     * @param socketId
-     * @param objData
-     */
-    void startPasswordReset(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief submitPasswordReset2faCode checks the entered totp code of a pending password reset and resets the password on success
-     * @param socketId
-     * @param objData
-     */
-    void submitPasswordReset2faCode(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief send2faResponse sends a json response for a 2fa command
-     * @param socketId
-     * @param command response command name
-     * @param result error code of the operation
-     * @param additionalData optional additional json values (e.g. secret, url, new password)
-     */
-    void send2faResponse(qint64 socketId, const QString & command, GameEnums::LoginError result, const QJsonObject & additionalData = QJsonObject());
-    /**
-     * @brief cleanUpExpired2faSessions removes expired 2fa enrollments and password reset sessions and informs affected clients
-     */
-    void cleanUpExpired2faSessions();
-    /**
      * @brief changeAccountPassword
      * @param socketId
      * @param doc
      * @param action
      */
     void changeAccountPassword(qint64 socketId, const QJsonObject & objData);
-    /**
-     * @brief getAccountInfo
-     * @param username
-     * @param success
-     * @return
-     */
-    static QSqlQuery getAccountInfo(QSqlDatabase & database, const QString & username, bool & success);
-    /**
-     * @brief hasTotpSecret checks if a totp secret for 2 factor authentication is stored for the account
-     * @param database
-     * @param username
-     * @return true if a non-empty totp secret exists
-     */
-    static bool hasTotpSecret(QSqlDatabase & database, const QString & username);
-    /**
-     * @brief storeTotpSecret stores the base32 encoded totp secret for the account
-     * @param database
-     * @param username
-     * @param base32Secret base32 encoded totp secret
-     * @return true if the secret was stored
-     */
-    static bool storeTotpSecret(QSqlDatabase & database, const QString & username, const QString & base32Secret);
-    /**
-     * @brief clearTotpSecret removes the totp secret of the account
-     * @param database
-     * @param username
-     * @return true if the secret was removed
-     */
-    static bool clearTotpSecret(QSqlDatabase & database, const QString & username);
     /**
      * @brief sendMail
      * @param message
@@ -637,6 +549,7 @@ private:
     MatchMakingCoordinator m_matchMakingCoordinator;
     MapFileServer m_mapFileServer;
     ReplayRecordFileserver m_replayRecordFileserver;
+    TwoFactorAuthenticatorServer m_twoFactorAuthenticatorServer;
     /**
      * @brief m_serverData
      */
@@ -645,14 +558,6 @@ private:
      * @brief m_mailSender
      */
     SmtpMailSender m_mailSender;
-    /**
-     * @brief m_pending2faSetups pending 2fa enrollments per client socket
-     */
-    QHash<quint64, TotpEnrollment> m_pending2faSetups;
-    /**
-     * @brief m_passwordResetSessions pending totp password resets per client socket
-     */
-    QHash<quint64, PasswordResetSession> m_passwordResetSessions;
     /**
      * @brief m_mailSenderThread
      */

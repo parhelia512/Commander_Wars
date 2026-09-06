@@ -34,6 +34,14 @@ var ForgotPasswordDialog =
             menu.resetPasswordOnServerAccount(email);
         }
     },
+    start2faReset : function()
+    {
+        var variables = forgotPassword.getVariables();
+        var email = variables.createVariable("email").readDataString();
+        var menu = forgotPassword.getBaseMenu();
+        ForgotPasswordDialog.changeEnableForItems(false);
+        menu.start2faResetPassword(email);
+    },
     submitCode : function()
     {
         var variables = forgotPassword.getVariables();
@@ -86,10 +94,8 @@ var ForgotPasswordDialog =
             var variables = forgotPassword.getVariables();
             variables.createVariable("showCodeInput").writeDataBool(true);
             forgotPassword.refreshUi();
-            forgotPassword.showMessageBox(qsTr("Enter the current 6 digit code shown by your authenticator app."));
-            forgotPassword.setObjectEnabled("CodeBox", true);
-            forgotPassword.setObjectEnabled("SubmitCodeButton", true);
-            forgotPassword.setObjectEnabled("AbortButton", true);
+            forgotPassword.showMessageBox(qsTr("Enter the current 6 digit code shown by your authenticator app."));            
+            ForgotPasswordDialog.changeEnableForItems(true);
         }
         else if (errorCode === GameEnums.LoginError_None && newPassword.length > 0)
         {
@@ -100,9 +106,7 @@ var ForgotPasswordDialog =
         else if (errorCode === GameEnums.LoginError_Invalid2faCode)
         {
             forgotPassword.showMessageBox(qsTr("The entered code is invalid. Please check the time of your device and try again."));
-            forgotPassword.setObjectEnabled("CodeBox", true);
-            forgotPassword.setObjectEnabled("SubmitCodeButton", true);
-            forgotPassword.setObjectEnabled("AbortButton", true);
+            ForgotPasswordDialog.changeEnableForItems(true);
         }
         else if (errorCode === GameEnums.LoginError_2faResetTimeout)
         {
@@ -128,7 +132,9 @@ var ForgotPasswordDialog =
     changeEnableForItems : function(value)
     {
         forgotPassword.setObjectEnabled("EmailBox", value);
+        forgotPassword.setObjectEnabled("CodeBox", value);
         forgotPassword.setObjectEnabled("AbortButton", value);
         forgotPassword.setObjectEnabled("ResetButton", value);
+        forgotPassword.setObjectEnabled("SubmitCodeButton", value);
     },
 };

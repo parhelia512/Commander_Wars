@@ -41,9 +41,18 @@ public:
      * @return width = height of the current QR code, 0 if no data is set
      */
     Q_INVOKABLE qint32 getQrSize() const;
+    Q_INVOKABLE void setPixelPerModule(qint32 pixelPerModule);
+    Q_INVOKABLE qint32 getPixelPerModule() const;
+    Q_INVOKABLE void setQuietZoneModules(qint32 quietZoneModules);
+    Q_INVOKABLE qint32 getQuietZoneModules() const;
+private:
+    qint32 getImageSize(qint32 modules) const;
 private:
     oxygine::spSprite m_pSprite;
     oxygine::spSingleResAnim m_pResAnim;
+    qint32 m_pixelPerModule{PIXEL_PER_MODULE};
+    qint32 m_quietZoneModules{QUIET_ZONE_MODULES};
+    QString m_data;
 };
 
 #endif // QRCODEACTOR_H

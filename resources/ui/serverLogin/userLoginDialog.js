@@ -1,5 +1,12 @@
 var UserLoginDialog =
 {
+    showCodeInput : function()
+    {
+        var variables = forgotPassword.getVariables();
+        var showVariable = variables.createVariable("showCodeInput");
+        var show = showVariable.readDataBool();
+        return show === true;
+    },
     createAccountText : function()
     {
         return qsTr("Create account");
@@ -19,7 +26,7 @@ var UserLoginDialog =
     },
     forgotPassword : function()
     {
-        return qsTr("Forgot password");
+        return qsTr("Reset password");
     },
     forgotPasswordTooltip : function()
     {
@@ -51,7 +58,7 @@ var UserLoginDialog =
     },
     deleteText : function()
     {
-        return qsTr("Delete");
+        return qsTr("Delete Account");
     },
     deleteTooltip : function()
     {
@@ -87,6 +94,14 @@ var UserLoginDialog =
     {
         return qsTr("Password of your account.");
     },
+    continueText : function()
+    {
+        return qsTr("Continue");
+    },
+    continueTooltip : function()
+    {
+        return qsTr("Continue and closing this dialog.");
+    },
 
     primaryPassword : function(input)
     {
@@ -109,13 +124,15 @@ var UserLoginDialog =
         var menu = userLogin.getBaseMenu();
         if (errorCode === GameEnums.LoginError_None)
         {
-            userLogin.showMessageBox(qsTr("Logged onto the server."));
             if (has2fa === false)
             {
-                userLogin.showMessageBox(qsTr("Your account has no 2 factor authentication. Without it your password can not be reset in case you forget it. You can set it up with the 'Setup 2FA' button after logging in."));
+                userLogin.showMessageBox(qsTr("Logged onto the server.\nYour account has no 2 factor authentication. Without it your password can not be reset in case you forget it. You can set it up with the 'Setup 2FA' button."));
+            }
+            else
+            {
+                userLogin.showMessageBox(qsTr("Logged onto the server."));
             }
             menu.onLogin();
-            userLogin.exit();
         }
         else if (errorCode === GameEnums.LoginError_WrongPassword)
         {
@@ -148,8 +165,9 @@ var UserLoginDialog =
         userLogin.setObjectEnabled("PasswordBox", value);
         userLogin.setObjectEnabled("CreateAccountButton", value);
         userLogin.setObjectEnabled("LoginButton", value);
-        userLogin.setObjectEnabled("ForgotPasswordButton", value);
         userLogin.setObjectEnabled("LocalButton", value);
+        userLogin.setObjectEnabled("Setup2faButton", !value);
+        userLogin.setObjectEnabled("ContinueButton", !value);
     },
     exit : function()
     {

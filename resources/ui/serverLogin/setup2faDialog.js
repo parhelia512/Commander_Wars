@@ -6,7 +6,12 @@ var Setup2faDialog =
     },
     infoText : function()
     {
-        return qsTr("Optional: Scan the qr code with an authenticator app (e.g. Aegis, 2FAS, FreeOTP+, Google Authenticator, Microsoft Authenticator, Bitwarden or KeePassXC) or enter the shown secret manually in the app. Afterwards enter the 6 digit code shown by the app to activate the 2 factor authentication. The 2 factor authentication allows you to reset your password without an e-mail account.");
+        return qsTr("Optional: Scan the qr code with an authenticator app.\n") +
+        qsTr("Optional: Scan the qr code with an authenticator app.\n") + 
+        qsTr("e.g. Aegis, 2FAS, FreeOTP+, Google Authenticator, Microsoft Authenticator, Bitwarden or KeePassXC\n") +
+        qsTr("Enter the shown secret manually in the app.\n") +
+        qsTr("Afterwards enter the 6 digit code shown by the app to activate the 2 factor authentication.\n") +
+        qsTr("The 2 factor authentication allows you to reset your password without an e-mail account.");
     },
     secretText : function()
     {

@@ -1569,6 +1569,10 @@ void Settings::setup()
             MemoryManagement::create<Value<QString>>("Mailing", "MailServerUsername", &m_mailServerUsername, "", "", ""),
             MemoryManagement::create<Value<qint32>>("Mailing", "MailServerAuthMethod", &m_mailServerAuthMethod, 1, 0, 1),
             MemoryManagement::create<Value<QString>>("Mailing", "MailServerSendAddress", &m_mailServerSendAddress, "", "", ""),
+            // 2 factor authentication
+            MemoryManagement::create<Value<qint64>>("TwoFactorAuthentication", "TotpSetupTimeoutMs", &m_totpSetupTimeoutMs, 10 * 60 * 1000, 0, std::numeric_limits<qint64>::max()),
+            MemoryManagement::create<Value<qint64>>("TwoFactorAuthentication", "PasswordResetTimeoutMs", &m_passwordResetTimeoutMs, 5 * 60 * 1000, 0, std::numeric_limits<qint64>::max()),
+            MemoryManagement::create<Value<qint32>>("TwoFactorAuthentication", "PasswordResetMaxAttempts", &m_passwordResetMaxAttempts, 5, 0, std::numeric_limits<qint32>::max()),
 
             // auto saving
             MemoryManagement::create<Value<std::chrono::seconds>>("Autosaving", "AutoSavingTime", &m_autoSavingCylceTime, std::chrono::seconds(60 * 5), std::chrono::seconds(0), std::chrono::seconds(60 * 60 * 24)),
@@ -2606,4 +2610,34 @@ bool Settings::getAutoShowAttackableFields() const
 void Settings::setAutoShowAttackableFields(bool newAutoShowAttackableFields)
 {
     m_autoShowAttackableFields = newAutoShowAttackableFields;
+}
+
+void Settings::setTotpSetupTimeoutMs(qint64 newTotpSetupTimeoutMs)
+{
+    m_totpSetupTimeoutMs = newTotpSetupTimeoutMs;
+}
+
+qint64 Settings::getTotpSetupTimeoutMs() const
+{
+    return m_totpSetupTimeoutMs;
+}
+
+void Settings::setPasswordResetTimeoutMs(qint64 newPasswordResetTimeoutMs)
+{
+    m_passwordResetTimeoutMs = newPasswordResetTimeoutMs;
+}
+
+qint64 Settings::getPasswordResetTimeoutMs() const
+{
+    return m_passwordResetTimeoutMs;
+}
+
+void Settings::setPasswordResetMaxAttempts(qint32 newPasswordResetMaxAttempts)
+{
+    m_passwordResetMaxAttempts = newPasswordResetMaxAttempts;
+}
+
+qint32 Settings::getPasswordResetMaxAttempts() const
+{
+    return m_passwordResetMaxAttempts;
 }

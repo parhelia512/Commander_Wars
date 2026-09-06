@@ -135,8 +135,12 @@ static const char* const attrActiveResAnim = "activeResAnim";
 static const char* const attrTabs = "tabs";
 static const char* const attrTerrain = "terrain";
 static const char* const attrColorPicker = "colorPicker";
-static const char* const attrSliderWidth = "sliderwWdth";
+static const char* const attrSliderWidth = "sliderWidth";
 static const char* const attrSliderHeight = "sliderHeight";
+static const char* const attrPixelPerModule = "pixelPerModule";
+static const char* const attrQuietZoneModules = "quietZoneModules";
+static const char* const attrReadOnly = "readonly";
+static const char* const attrMultiline = "multiline";
 
 // normally i'm not a big fan of this but else the function table gets unreadable
 using namespace std::placeholders;
@@ -450,10 +454,12 @@ bool UiFactory::createLabel(oxygine::spActor parent, QDomElement element, oxygin
         QString tooltip = translate(getStringValue(getAttribute(childs, attrTooltip), id, loopIdx, pMenu));
         QString fontColor = getStringValue(getAttribute(childs, attrFontColor), id, loopIdx, pMenu);
         auto hAlign = getHAlignment(getAttribute(childs, attrHAlign), id, loopIdx, pMenu);
+        bool multiline = getBoolValue(getAttribute(childs, attrMultiline), id, loopIdx, pMenu, false);
         auto style = getStyle(getStringValue(getAttribute(childs, attrFont), id, loopIdx, pMenu),
                               fontColor,
                               getIntValue(getAttribute(childs, attrFontSize), id, loopIdx, pMenu, 24),
                               hAlign);
+        style.multiline = multiline;
         bool showBorder = getBoolValue(getAttribute(childs, attrShowBorder), id, loopIdx, pMenu, false);                              
         spLabel pLabel = MemoryManagement::create<Label>(width, showBorder);
         bool enabled = getBoolValue(getAttribute(childs, attrEnabled), id, loopIdx, pMenu, true);
@@ -801,19 +807,23 @@ bool UiFactory::createQrCode(oxygine::spActor parent, QDomElement element, oxygi
         QString id = getId(getStringValue(getAttribute(childs, attrId), "", loopIdx, pMenu));
         qint32 x = getIntValue(getAttribute(childs, attrX), id, loopIdx, pMenu);
         qint32 y = getIntValue(getAttribute(childs, attrY), id, loopIdx, pMenu);
+        qint32 pixelPerModule = getIntValue(getAttribute(childs, attrPixelPerModule), id, loopIdx, pMenu, 4);
+        qint32 quietZoneModules = getIntValue(getAttribute(childs, attrQuietZoneModules), id, loopIdx, pMenu, 4);
         bool enabled = getBoolValue(getAttribute(childs, attrEnabled), id, loopIdx, pMenu, true);
         bool visible = getBoolValue(getAttribute(childs, attrVisible), id, loopIdx, pMenu, true);
         spQrCodeActor pQrCode = MemoryManagement::create<QrCodeActor>();
         pQrCode->setPosition(x, y);
         pQrCode->setVisible(visible);
         pQrCode->setEnabled(enabled);
+        pQrCode->setPixelPerModule(pixelPerModule);
+        pQrCode->setQuietZoneModules(quietZoneModules);
         if (!id.isEmpty())
         {
             pQrCode->setObjectName(id);
         }
         parent->addChild(pQrCode);
         item = pQrCode;
-        m_lastCoordinates = QRect(x, y, 10, 10);
+        m_lastCoordinates = QRect(x, y, pQrCode->getScaledWidth(), pQrCode->getScaledHeight());
         updateMenuSize(pMenu);
     }
     return success;
@@ -1389,6 +1399,7 @@ bool UiFactory::createTextbox(oxygine::spActor parent, QDomElement element, oxyg
         QString value = getStringValue(getAttribute(childs, attrStartValue), id, loopIdx, pMenu);
         bool enabled = getBoolValue(getAttribute(childs, attrEnabled), id, loopIdx, pMenu, true);
         bool visible = getBoolValue(getAttribute(childs, attrVisible), id, loopIdx, pMenu, true);
+        bool readOnly = getBoolValue(getAttribute(childs, attrReadOnly), id, loopIdx, pMenu, false);
         spTextbox pTextbox = MemoryManagement::create<Textbox>(width, height);
         pTextbox->setPosition(x, y);
         pTextbox->setTooltipText(tooltip);
@@ -1399,6 +1410,7 @@ bool UiFactory::createTextbox(oxygine::spActor parent, QDomElement element, oxyg
         }
         pTextbox->setEnabled(enabled);
         pTextbox->setVisible(visible);
+        pTextbox->setReadonly(readOnly);
         connect(pTextbox.get(), &Textbox::sigTextChanged, pMenu, [this, onEventLine, id, loopIdx, pMenu](QString value)
         {
             onEvent(onEventLine, value, id, loopIdx, pMenu);

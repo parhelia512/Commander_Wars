@@ -167,26 +167,26 @@ namespace oxygine
         }
     }
 
-    void GameWindow::loadResAnim(oxygine::spResAnim pAnim, QImage & image, qint32 columns, qint32 rows, float scaleFactor)
+    void GameWindow::loadResAnim(oxygine::spResAnim pAnim, QImage & image, qint32 columns, qint32 rows, float scaleFactor, bool clamp2Edge, quint32 linearFilter)
     {
         if (!m_shuttingDown && !m_noUi)
         {
             if (isMainThread())
             {
-                loadSingleResAnim(pAnim, image, columns, rows, scaleFactor);
+                loadSingleResAnim(pAnim, image, columns, rows, scaleFactor, clamp2Edge, linearFilter);
             }
             else
             {
-                emit sigLoadSingleResAnim(pAnim, image, columns, rows, scaleFactor);
+                emit sigLoadSingleResAnim(pAnim, image, columns, rows, scaleFactor, clamp2Edge, linearFilter);
             }
         }
     }
 
-    void GameWindow::loadSingleResAnim(oxygine::spResAnim pAnim, QImage image, qint32 columns, qint32 rows, float scaleFactor)
+    void GameWindow::loadSingleResAnim(oxygine::spResAnim pAnim, QImage image, qint32 columns, qint32 rows, float scaleFactor, bool clamp2Edge, quint32 linearFilter)
     {
         if (pAnim.get() != nullptr && !m_noUi)
         {
-            pAnim->init(image, columns, rows, scaleFactor);
+            pAnim->init(image, columns, rows, scaleFactor, clamp2Edge, linearFilter);
         }
     }
 
